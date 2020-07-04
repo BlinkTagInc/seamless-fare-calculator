@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <style>
+    .bg-blue {
+      background-color: #204285;
+      border-bottom: 2px solid #ECB11E;
+    }
+
+    .btn-blue {
+      color: #fff;
+      background-color: #204285;
+      border-color: #204285;
+    }
+
+    .btn-blue:hover {
+      color: #fff;
+      background-color: hsl(220, 58%, 40%);
+      border-color: hsl(220, 58%, 40%);
+    }
+
+    .map {
+      height: 400px;
+    }
+
+    .results {
+      display: none;
+    }
+
+    .fare {
+      font-size: 60px;
+      font-weight: bold;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    @media screen and (min-width: 768px) {
+      h2 {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+
+  <title>Fare Zone Calculator</title>
+</head>
+
+<body>
+  <div class="container py-4 py-md-5">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">Fare Zone Calculator</h2>
+            <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
+            <form id="zone-form">
+              <div class="form-group row">
+                <label for="start-address" class="col-sm-3 col-form-label">Start Address</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
+                </div>
+
+              </div>
+              <div class="form-group row">
+                <label for="end-address" class="col-sm-3 col-form-label">End Address</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
+                </div>
+              </div>
+              <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="results mt-5">
+      <h2 class="text-center"><span id="distance"></span> mile trip on <span id="agencies"></span></h2>
+      <div class="row">
+        <div class="col-md-4 offset-md-2 mb-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h4>Current Fare</h4>
+              <div class="fare" id="current-fare"></div>
+              <div id="current-fare-notes"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h4>Zone-Based Fare</h4>
+              <div class="fare" id="zone-fare"></div>
+              <div id="zone-fare-details"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="map" class="map"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"
+    integrity="sha256-7/yoZS3548fXSRXqc/xYzjsmuW3sFKzuvOCHd06Pmps=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+  </script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mapbox/polyline" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pluralize" crossorigin="anonymous"></script>
+
+  <script>
+    let map
+    let autocomplete_origin
+    let autocomplete_destination
+    let directionsService
+    let directionsRenderer
+    let farezones
+
+    fetch('/data/farezones.json')
+      .then(result => result.json())
+      .then(result => {
+        farezones = L.geoJson(result)
+        console.log(result)
+      })
+
+    const currencyFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    })
+
+    function initializeMapServices() {
+      const bottom_left_lat = 37.700297
+      const bottom_left_lon = -122.400741
+      const top_right_lat = 38.058351
+      const top_right_lon = -121.587719
+
+      const defaultBounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(bottom_left_lat, bottom_left_lon),
+        new google.maps.LatLng(top_right_lat, top_right_lon)
+      )
+
+      const options = {
+        bounds: defaultBounds,
+        componentRestrictions: {
+          country: 'us'
+        },
+        types: ['geocode']
+      }
+
+      autocomplete_origin = new google.maps.places.Autocomplete(document.getElementById('start-address'), options)
+      autocomplete_destination = new google.maps.places.Autocomplete(document.getElementById('end-address'), options)
+
+      autocomplete_origin.setFields(['geometry'])
+      autocomplete_destination.setFields(['geometry'])
+
+      directionsService = new google.maps.DirectionsService()
+      directionsRenderer = new google.maps.DirectionsRenderer()
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 10,
+        center: {
+          lat: 37.7,
+          lng: -122.3
+        }
+      })
+
+      const transitLayer = new google.maps.TransitLayer()
+      transitLayer.setMap(map)
+
+      directionsRenderer.setMap(map)
+    }
+
+    function metersToMiles(meters) {
+      return meters / 1609.34
+    }
+
+    function getZoneFare(route) {
+      const decodedPath = polyline.decode(route.overview_polyline)
+      const zones = {}
+
+      decodedPath.forEach(function (point, idx) {
+        // use first, last and every 4th point
+        if (idx === 1 || idx % 4 === 0 || idx === (decodedPath.length - 1)) {
+          var matchedZones = leafletPip.pointInLayer([point[1], point[0]], farezones, true)
+
+          if (matchedZones && matchedZones.length && matchedZones[0].feature && matchedZones[0].feature
+            .properties) {
+            var zone = matchedZones[0].feature.properties
+            zones[zone.Name] = true
+          }
+        }
+      })
+
+      const zoneCount = _.size(zones)
+
+      return {
+        zoneCount,
+        fare: Math.max(2, zoneCount)
+      }
+    }
+
+    function renderResults(response, status) {
+      if (status !== 'OK') {
+        console.error(status)
+        $('#results').hide()
+        return alert('Unable to compare trip')
+      }
+
+      const route = response.routes[0]
+
+      console.log(route)
+
+      const totals = route.legs.reduce((memo, leg) => {
+        for (const step of leg.steps) {
+          if (step.travel_mode !== 'TRANSIT') {
+            continue
+          }
+
+          if (step.transit && step.transit.line && step.transit.line.agencies) {
+            memo.agencies.push(...step.transit.line.agencies.map(agency => agency.name))
+          }
+
+          memo.distance += step.distance.value
+        }
+        return memo
+      }, {
+        distance: 0,
+        agencies: []
+      })
+
+      if (route.fare) {
+        $('#current-fare').text(route.fare.text)
+        $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
+      } else {
+        $('#current-fare').text('')
+        $('#current-fare-notes').text('No fare information available via Google Maps')
+      }
+
+      const zoneFare = getZoneFare(route)
+
+      $('#zone-fare').text(currencyFormatter.format(zoneFare.fare))
+      $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
+
+      $('#agencies').text(totals.agencies.join(', '))
+      $('#distance').text(Math.round(metersToMiles(totals.distance) * 10) / 10)
+
+      $('#results').show()
+      $('body').scrollTo('#results', 1000);
+
+      directionsRenderer.setDirections(response)
+    }
+
+    $('#zone-form').submit(event => {
+      event.preventDefault()
+
+      const origin = autocomplete_origin.getPlace()
+      if (!origin.geometry) {
+        return alert('Please enter a start location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
+      }
+
+      const destination = autocomplete_destination.getPlace()
+      if (!destination.geometry) {
+        return alert('Please enter an end location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
+      }
+
+      const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
+        .toDate()
+
+      directionsService.route({
+          origin: origin.geometry.location,
+          destination: destination.geometry.location,
+          travelMode: 'TRANSIT',
+          transitOptions: {
+            departureTime: nextMondayMorning
+          }
+        },
+        renderResults
+      )
+    })
+  </script>
+
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDKpeuYy5IXMrsQpmwVMpHP_6ymFkqnFbE&libraries=places&callback=initializeMapServices"
+    async defer></script>
+</body>
+
+</html>
