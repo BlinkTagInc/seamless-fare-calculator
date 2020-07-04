@@ -118,7 +118,8 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
     integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js" crossorigin="anonymous">
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@mapbox/polyline" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js" crossorigin="anonymous"></script>
@@ -136,7 +137,6 @@
       .then(result => result.json())
       .then(result => {
         farezones = L.geoJson(result)
-        console.log(result)
       })
 
     const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -184,6 +184,24 @@
       transitLayer.setMap(map)
 
       directionsRenderer.setMap(map)
+
+      const kmlLayer = new google.maps.KmlLayer({
+        url: `https://${location.host}/data/farezones.kml`,
+        preserveViewport: true,
+        suppressInfoWindows: true,
+        map: map
+      })
+
+      kmlLayer.setMap(map)
+
+      // map.data.loadGeoJson('/data/farezones.json')
+
+      // map.data.setStyle({
+      //   fillColor: '#cccccc',
+      //   fillOpacity: 0.2,
+      //   strokeWeight: 3,
+      //   strokeColor: '#333333'
+      // })
     }
 
     function metersToMiles(meters) {
@@ -224,8 +242,6 @@
 
       const route = response.routes[0]
 
-      console.log(route)
-
       const totals = route.legs.reduce((memo, leg) => {
         for (const step of leg.steps) {
           if (step.travel_mode !== 'TRANSIT') {
@@ -244,12 +260,16 @@
         agencies: []
       })
 
+      totals.agencies = _.uniq(totals.agencies)
+
       if (route.fare) {
         $('#current-fare').text(route.fare.text)
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
         $('#current-fare').text('')
-        $('#current-fare-notes').text('No fare information available via Google Maps')
+        $('#current-fare-notes').text(
+          `No fare information available via Google Maps for route across ${pluralize('agency', totals.agencies.length, true)}`
+          )
       }
 
       const zoneFare = getZoneFare(route)
@@ -261,7 +281,7 @@
       $('#distance').text(Math.round(metersToMiles(totals.distance) * 10) / 10)
 
       $('#results').show()
-      $('body').scrollTo('#results', 1000);
+      $('body').scrollTo('#results', 1000)
 
       directionsRenderer.setDirections(response)
     }
