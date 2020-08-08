@@ -233,14 +233,48 @@
       }
     }
 
-    function renderResults(response, status) {
-      if (status !== 'OK') {
-        console.error(status)
-        $('#results').hide()
-        return alert('Unable to compare trip')
-      }
+    function fetchTransitDirections(origin, destination, resolve, reject) {
+      const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
+        .toDate()
+      directionsService.route(
+        {
+          origin: origin.geometry.location,
+          destination: destination.geometry.location,
+          travelMode: 'TRANSIT',
+          transitOptions: {
+            departureTime: nextMondayMorning
+          }
+        },
+        (response, status) => {
+          if (status !== 'OK') {
+            return reject(new Error(status));
+          }
 
-      const route = response.routes[0]
+          resolve(response);
+        }
+      )
+    }
+
+    function fetchDrivingDirections(origin, destination, resolve, reject) {
+      directionsService.route(
+        {
+          origin: origin.geometry.location,
+          destination: destination.geometry.location,
+          travelMode: 'DRIVING',
+        },
+        (response, status) => {
+          if (status !== 'OK') {
+            return reject(new Error(status));
+          }
+
+          resolve(response);
+        }
+      )
+    }
+
+    function renderResults([ transitDirections, drivingDirections]) {
+      const route = transitDirections.routes[0]
+      const drivingRoute = drivingDirections.routes[0]
 
       const totals = route.legs.reduce((memo, leg) => {
         for (const step of leg.steps) {
@@ -267,12 +301,18 @@
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
         $('#current-fare').text('')
-        $('#current-fare-notes').text(
-          `No fare information available via Google Maps for route across ${pluralize('agency', totals.agencies.length, true)}`
+        if (totals.agencies.includes('AC Transit')) {
+          $('#current-fare-notes').text(
+            'AC Transit does not publish fare information, so no current fare information is available.'
           )
+        } else {
+          $('#current-fare-notes').text(
+            `No fare information available via Google Maps for route across ${pluralize('agency', totals.agencies.length, true)}`
+          )
+        }
       }
 
-      const zoneFare = getZoneFare(route)
+      const zoneFare = getZoneFare(drivingRoute)
 
       $('#zone-fare').text(currencyFormatter.format(zoneFare.fare))
       $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
@@ -283,7 +323,7 @@
       $('#results').show()
       $('body').scrollTo('#results', 1000)
 
-      directionsRenderer.setDirections(response)
+      directionsRenderer.setDirections(transitDirections)
     }
 
     $('#zone-form').submit(event => {
@@ -299,19 +339,20 @@
         return alert('Please enter an end location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
       }
 
-      const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
-        .toDate()
-
-      directionsService.route({
-          origin: origin.geometry.location,
-          destination: destination.geometry.location,
-          travelMode: 'TRANSIT',
-          transitOptions: {
-            departureTime: nextMondayMorning
-          }
-        },
-        renderResults
-      )
+      Promise.all([
+        new Promise((resolve, reject) => {
+          fetchTransitDirections(origin, destination, resolve, reject)
+        }),
+        new Promise((resolve, reject) => {
+          fetchDrivingDirections(origin, destination, resolve, reject)
+        }),
+      ])
+      .then(renderResults)
+      .catch(error => {
+        console.error(error)
+        $('#results').hide()
+        return alert('Unable to compare trip')
+      })
     })
   </script>
 
