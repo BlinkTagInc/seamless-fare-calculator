@@ -290,12 +290,12 @@
       event.preventDefault()
 
       const origin = autocomplete_origin.getPlace()
-      if (!origin.geometry) {
+      if (!origin || !origin.geometry) {
         return alert('Please enter a start location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
       }
 
       const destination = autocomplete_destination.getPlace()
-      if (!destination.geometry) {
+      if (!destination || !destination.geometry) {
         return alert('Please enter an end location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
       }
 
