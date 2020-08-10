@@ -301,9 +301,14 @@
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
         $('#current-fare').text('')
-        if (totals.agencies.includes('AC Transit')) {
+
+        const agenciesWithoutFares = [
+          'AC Transit',
+          'Dumbarton Express Consortium'
+        ]
+        if (_.intersection(totals.agencies, agenciesWithoutFares).length > 0) {
           $('#current-fare-notes').text(
-            'AC Transit does not publish fare information, so no current fare information is available.'
+            `${_.intersection(totals.agencies, agenciesWithoutFares).join(' and ')} does not publish fare information, so no current fare information is available.`
           )
         } else {
           $('#current-fare-notes').text(
