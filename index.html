@@ -170,7 +170,6 @@
       autocomplete_destination.setFields(['geometry'])
 
       directionsService = new google.maps.DirectionsService()
-      directionsRenderer = new google.maps.DirectionsRenderer()
 
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 10,
@@ -180,10 +179,13 @@
         }
       })
 
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        draggable: true,
+        map
+      })
+
       const transitLayer = new google.maps.TransitLayer()
       transitLayer.setMap(map)
-
-      directionsRenderer.setMap(map)
 
       const kmlLayer = new google.maps.KmlLayer({
         url: `https://${location.host}/data/farezones.kml`,
@@ -233,11 +235,29 @@
       }
     }
 
+    function fetchTransitStepDirections(startLocation, endLocation, time, resolve, reject) {
+      directionsService.route({
+          origin: startLocation,
+          destination: endLocation,
+          travelMode: 'TRANSIT',
+          transitOptions: {
+            departureTime: time
+          }
+        },
+        (response, status) => {
+          if (status !== 'OK') {
+            return reject(new Error(status));
+          }
+
+          resolve(response);
+        }
+      )
+    }
+
     function fetchTransitDirections(origin, destination, resolve, reject) {
       const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
         .toDate()
-      directionsService.route(
-        {
+      directionsService.route({
           origin: origin.geometry.location,
           destination: destination.geometry.location,
           travelMode: 'TRANSIT',
@@ -256,8 +276,7 @@
     }
 
     function fetchDrivingDirections(origin, destination, resolve, reject) {
-      directionsService.route(
-        {
+      directionsService.route({
           origin: origin.geometry.location,
           destination: destination.geometry.location,
           travelMode: 'DRIVING',
@@ -272,7 +291,7 @@
       )
     }
 
-    function renderResults([ transitDirections, drivingDirections]) {
+    async function renderResults([transitDirections, drivingDirections]) {
       const route = transitDirections.routes[0]
       const drivingRoute = drivingDirections.routes[0]
 
@@ -300,22 +319,61 @@
         $('#current-fare').text(route.fare.text)
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
-        $('#current-fare').text('')
+        let tripFare = 0;
+        const noFareAgencies = [];
 
-        const agenciesWithoutFares = [
-          'AC Transit',
-          'Dumbarton Express Consortium'
-        ]
-        if (_.intersection(totals.agencies, agenciesWithoutFares).length > 0) {
-          $('#current-fare-notes').text(
-            `${_.intersection(totals.agencies, agenciesWithoutFares).join(' and ')} does not publish fare information, so no current fare information is available.`
-          )
+        const agencyFareInfo = {
+          'AC Transit': {
+            value: 2.5
+          },
+          'Dumbarton Express Consortium': {
+            value: 6
+          }
+        }
+
+        await Promise.all(route.legs.map(async leg => {
+          return Promise.all(leg.steps.map(async step => {
+            if (step.travel_mode !== 'TRANSIT') {
+              return;
+            }
+
+            const stepDirections = await new Promise((resolve, reject) => {
+              fetchTransitStepDirections(step.start_location, step.end_location, step.transit
+                .departure_time.value, resolve, reject);
+            });
+
+            if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0 &&
+              stepDirections.routes[0].fare) {
+              tripFare += stepDirections.routes[0].fare.value;
+            } else {
+              stepDirections.routes[0].legs.forEach(leg => leg.steps.forEach(step => {
+                if (step.transit) {
+                  step.transit.line.agencies.forEach(agency => {
+                    if (agencyFareInfo[agency.name]) {
+                      tripFare += agencyFareInfo[agency.name].value;
+                    }
+                    noFareAgencies.push(agency.name);
+                  });
+                }
+              }));
+            }
+          }));
+        }));
+
+
+        if (noFareAgencies.length > 0) {
+          $('#current-fare').text(currencyFormatter.format(tripFare)).append('<sup>†</sup>')
+          $('#current-fare-notes').html([
+            '<sup>†</sup>',
+            $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
+          ]);
         } else {
-          $('#current-fare-notes').text(
-            `No fare information available via Google Maps for route across ${pluralize('agency', totals.agencies.length, true)}`
-          )
+          $('#current-fare').text(currencyFormatter.format(tripFare))
+          $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
         }
       }
+
+
 
       const zoneFare = getZoneFare(drivingRoute)
 
@@ -345,19 +403,19 @@
       }
 
       Promise.all([
-        new Promise((resolve, reject) => {
-          fetchTransitDirections(origin, destination, resolve, reject)
-        }),
-        new Promise((resolve, reject) => {
-          fetchDrivingDirections(origin, destination, resolve, reject)
-        }),
-      ])
-      .then(renderResults)
-      .catch(error => {
-        console.error(error)
-        $('#results').hide()
-        return alert('Unable to compare trip')
-      })
+          new Promise((resolve, reject) => {
+            fetchTransitDirections(origin, destination, resolve, reject)
+          }),
+          new Promise((resolve, reject) => {
+            fetchDrivingDirections(origin, destination, resolve, reject)
+          }),
+        ])
+        .then(renderResults)
+        .catch(error => {
+          console.error(error)
+          $('#results').hide()
+          return alert('Unable to compare trip')
+        })
     })
   </script>
 
