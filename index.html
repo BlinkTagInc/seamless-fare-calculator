@@ -417,7 +417,38 @@
       )
     }
 
-    function applyFareClassDiscounts(fare) {
+    function applyFareClassDiscountsCurrent(fare) {
+      const fareClass = $('#fare-class').val();
+
+      const fareClasses = {
+        toddler: {
+          discount: 1
+        },
+        child: {
+          discount: 0.3
+        },
+        youth: {
+          discount: 0.3
+        },
+        adult: {
+          discount: 0
+        },
+        senior: {
+          discount: 0.49
+        },
+        disabled: {
+          discount: 0.49
+        },
+        'low-income': {
+          discount: 0.07
+        }
+      };
+
+      const discount = fareClasses[fareClass].discount;
+      return fare - fare * discount;
+    }
+
+    function applyFareClassDiscountsFuture(fare) {
       const fareClass = $('#fare-class').val();
 
       const fareClasses = {
@@ -473,7 +504,7 @@
       totals.agencies = _.uniq(totals.agencies)
 
       if (route.fare) {
-        const fare = applyFareClassDiscounts(route.fare.value)
+        const fare = applyFareClassDiscountsCurrent(route.fare.value)
         $('#current-fare').text(currencyFormatter.format(fare))
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
@@ -520,24 +551,22 @@
 
 
         if (noFareAgencies.length > 0) {
-          const fare = applyFareClassDiscounts(tripFare)
+          const fare = applyFareClassDiscountsCurrent(tripFare)
           $('#current-fare').text(currencyFormatter.format(fare)).append('<sup>†</sup>')
           $('#current-fare-notes').html([
             '<sup>†</sup>',
             $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
           ]);
         } else {
-          const fare = applyFareClassDiscounts(tripFare)
+          const fare = applyFareClassDiscountsCurrent(tripFare)
           $('#current-fare').text(currencyFormatter.format(fare))
           $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
         }
       }
 
-
-
       const zoneFare = getZoneFare(drivingRoute)
 
-      const fare = applyFareClassDiscounts(zoneFare.fare)
+      const fare = applyFareClassDiscountsFuture(zoneFare.fare)
       $('#zone-fare').text(currencyFormatter.format(fare))
       $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
 
