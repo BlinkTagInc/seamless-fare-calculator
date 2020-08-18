@@ -136,6 +136,9 @@
     fetch('/data/farezones.json')
       .then(result => result.json())
       .then(result => {
+        result.features.forEach((feature, index) => {
+          feature.properties.Name = `Zone ${index}`;
+        })
         farezones = L.geoJson(result)
       })
 
