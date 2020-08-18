@@ -74,6 +74,20 @@
                   <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
                 </div>
               </div>
+              <div class="form-group row">
+                <label for="fare-class" class="col-sm-3 col-form-label">Fare Class</label>
+                <div class="col-sm-9">
+                  <select class="form-control" id="fare-class">
+                    <option value="toddler">Toddler (0-5 years)</option>
+                    <option value="child">Child (6-12 years)</option>
+                    <option value="youth">Youth (13-17 years)</option>
+                    <option value="adult" selected>Adult (18-64 years)</option>
+                    <option value="senior">Senior (65+ years)</option>
+                    <option value="disabled">Disabled</option>
+                    <option value="low-income">Low-income</option>
+                  </select>
+                </div>
+              </div>
               <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
             </form>
           </div>
@@ -403,6 +417,37 @@
       )
     }
 
+    function applyFareClassDiscounts(fare) {
+      const fareClass = $('#fare-class').val();
+
+      const fareClasses = {
+        toddler: {
+          discount: 1
+        },
+        child: {
+          discount: 1
+        },
+        youth: {
+          discount: 0.5
+        },
+        adult: {
+          discount: 0
+        },
+        senior: {
+          discount: 0.5
+        },
+        disabled: {
+          discount: 0.5
+        },
+        'low-income': {
+          discount: 0.5
+        }
+      };
+
+      const discount = fareClasses[fareClass].discount;
+      return fare - fare * discount;
+    }
+
     async function renderResults([transitDirections, drivingDirections]) {
       const route = transitDirections.routes[0]
       const drivingRoute = drivingDirections.routes[0]
@@ -428,7 +473,8 @@
       totals.agencies = _.uniq(totals.agencies)
 
       if (route.fare) {
-        $('#current-fare').text(route.fare.text)
+        const fare = applyFareClassDiscounts(route.fare.value)
+        $('#current-fare').text(currencyFormatter.format(fare))
         $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
       } else {
         let tripFare = 0;
@@ -474,13 +520,15 @@
 
 
         if (noFareAgencies.length > 0) {
-          $('#current-fare').text(currencyFormatter.format(tripFare)).append('<sup>†</sup>')
+          const fare = applyFareClassDiscounts(tripFare)
+          $('#current-fare').text(currencyFormatter.format(fare)).append('<sup>†</sup>')
           $('#current-fare-notes').html([
             '<sup>†</sup>',
             $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
           ]);
         } else {
-          $('#current-fare').text(currencyFormatter.format(tripFare))
+          const fare = applyFareClassDiscounts(tripFare)
+          $('#current-fare').text(currencyFormatter.format(fare))
           $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
         }
       }
@@ -489,7 +537,8 @@
 
       const zoneFare = getZoneFare(drivingRoute)
 
-      $('#zone-fare').text(currencyFormatter.format(zoneFare.fare))
+      const fare = applyFareClassDiscounts(zoneFare.fare)
+      $('#zone-fare').text(currencyFormatter.format(fare))
       $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
 
       $('#agencies').text(totals.agencies.join(', '))
