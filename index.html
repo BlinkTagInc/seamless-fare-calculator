@@ -75,9 +75,9 @@
                 </div>
               </div>
               <div class="form-group row">
-                <label for="fare-class" class="col-sm-3 col-form-label">Fare Class</label>
+                <label for="rider-class" class="col-sm-3 col-form-label">Rider Class</label>
                 <div class="col-sm-9">
-                  <select class="form-control" id="fare-class">
+                  <select class="form-control" id="rider-class">
                     <option value="toddler">Toddler (0-5 years)</option>
                     <option value="child">Child (6-12 years)</option>
                     <option value="youth">Youth (13-17 years)</option>
@@ -418,7 +418,7 @@
     }
 
     function applyFareClassDiscountsCurrent(fare) {
-      const fareClass = $('#fare-class').val();
+      const fareClass = $('#rider-class').val();
 
       const fareClasses = {
         toddler: {
@@ -449,7 +449,7 @@
     }
 
     function applyFareClassDiscountsFuture(fare) {
-      const fareClass = $('#fare-class').val();
+      const fareClass = $('#rider-class').val();
 
       const fareClasses = {
         toddler: {
