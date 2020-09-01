@@ -101,6 +101,20 @@
 
     <div id="results" class="results mt-5">
       <h2 class="text-center"><span id="distance"></span> mile trip on <span id="agencies"></span></h2>
+      <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" data-type="single">Single Trip</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-type="daily">Daily</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-type="weekly">Weekly</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-type="monthly">Monthly</a>
+        </li>
+      </ul>
       <div class="row">
         <div class="col-md-4 offset-md-2 mb-4">
           <div class="card h-100">
@@ -150,6 +164,10 @@
     let directionsService
     let directionsRenderer
     let farezones
+    let transitDirections
+    let transitLegs
+    let drivingDirections
+    let renderMap = true
 
     fetch('/data/farezones.json')
       .then(result => result.json())
@@ -345,6 +363,7 @@
     }
 
     function getZoneFare(route) {
+      const timeframe = $('#timeframe a.active').data('type');
       const decodedPath = polyline.decode(route.overview_polyline)
       const zones = {}
 
@@ -363,9 +382,16 @@
 
       const zoneCount = _.size(zones)
 
+      const timeFrameMultipliers = {
+        'single': 1,
+        'daily': 3,
+        'weekly': 9,
+        'monthly': 36
+      }
+
       return {
         zoneCount,
-        fare: Math.max(2, zoneCount)
+        fare: Math.max(2, zoneCount) * timeFrameMultipliers[timeframe]
       }
     }
 
@@ -425,8 +451,173 @@
       )
     }
 
+    function applyTimeframeCurrent(transitLegs) {
+      const timeframe = $('#timeframe a.active').data('type');
+
+      const agencies = {
+        'AC Transit': {
+          single: 1,
+          daily: 2.2,
+          weekly: 9,
+          monthly: 36,
+        },
+        'Bay Area Rapid Transit': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 36
+        },
+        'Caltrain': {
+          single: 1,
+          daily: 2,
+          weekly: 9,
+          monthly: 27
+        },
+        'County Connection': {
+          single: 1,
+          daily: 1.9,
+          weekly: 9,
+          monthly: 30
+        },
+        'Dumbarton Express': {
+          single: 1,
+          daily: 2.2,
+          weekly: 9,
+          monthly: 36
+        },
+        'Fairfield and Suisun Transit': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 34
+        },
+        'Golden Gate Transit': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 36
+        },
+        'Marin Transit': {
+          single: 1,
+          daily: 2.8,
+          weekly: 9,
+          monthly: 22
+        },
+        'San Francisco Municipal Transportation Agency': {
+          single: 1,
+          daily: 7.6,
+          weekly: 15.3,
+          monthly: 27
+        },
+        'Petaluma Transit': {
+          simgle: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 20
+        },
+        'SamTrans': {
+          simgle: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 29
+        },
+        'Santa Rosa CityBus': {
+          single: 1,
+          daily: 2.7,
+          weekly: 9,
+          monthly: 33
+          },
+        'San Francisco Bay Ferry': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 36
+        },
+        'Sonoma Marin Area Rail Transit': {
+          single: 1,
+          daily: 3.1,
+          weekly: 9,
+          monthly: 27
+        },
+        'SolTrans': {
+          single: 1,
+          daily: 2.3,
+          weekly: 9,
+          monthly: 32
+        },
+        'Sonoma County Transit': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 28
+        },
+        'Tri Delta Transit': {
+          single: 1,
+          daily: 1.9,
+          weekly: 9,
+          monthly: 29
+        },
+        'Union City Transit': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 28
+        },
+        'Vacaville City Coach': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 24
+        },
+        'Napa': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 40
+        },
+        'VTA': {
+          single: 1,
+          daily: 3,
+          weekly: 9,
+          monthly: 35
+        },
+        'WestCat (Western Contra Costa)': {
+          single: 1,
+          daily: 2.1,
+          weekly: 9,
+          monthly: 23
+        },
+        'Livermore Amador Valley Transit Authority': {
+          single: 1,
+          daily: 1.9,
+          weekly: 9,
+          monthly: 30
+        }
+      }
+
+      const defaultAgency =  {
+        single: 1,
+        daily: 3,
+        weekly: 9,
+        monthly: 36
+      }
+
+      return transitLegs.map(leg => {
+        let multiplier = defaultAgency[timeframe]
+
+        if (agencies[leg.agency]) {
+          multiplier = agencies[leg.agency][timeframe]
+        }
+
+        return  {
+          ...leg,
+          fare: leg.fare * multiplier
+        }
+      })
+    }
+
     function applyFareClassDiscountsCurrent(fare) {
-      const fareClass = $('#rider-class').val();
+      const fareClass = $('#rider-class').val()
 
       const fareClasses = {
         toddler: {
@@ -457,7 +648,7 @@
           minDiscount: 0,
           maxDiscount: 0.5
         }
-      };
+      }
 
       const fareClassDiscount = fareClasses[fareClass]
 
@@ -468,7 +659,7 @@
     }
 
     function applyFareClassDiscountsFuture(fare) {
-      const fareClass = $('#rider-class').val();
+      const fareClass = $('#rider-class').val()
 
       const fareClasses = {
         toddler: {
@@ -492,10 +683,10 @@
         'low-income': {
           discount: 0.5
         }
-      };
+      }
 
-      const discount = fareClasses[fareClass].discount;
-      return fare - fare * discount;
+      const discount = fareClasses[fareClass].discount
+      return fare - fare * discount
     }
 
     function formatFareRange(fareRange) {
@@ -506,64 +697,16 @@
       return `${currencyFormatter.format(fareRange.max)} - ${currencyFormatter.format(fareRange.min)}`
     }
 
-    async function renderResults([transitDirections, drivingDirections]) {
-      const route = transitDirections.routes[0]
-      const drivingRoute = drivingDirections.routes[0]
-
-      let fares = [];
-      const noFareAgencies = [];
-
-      const agencyFareInfo = {
-        'AC Transit': {
-          value: 2.5
-        },
-        'Dumbarton Express Consortium': {
-          value: 6
-        }
+    async function renderResults() {
+      if (!transitDirections || !drivingDirections) {
+        return  alert('No directions found.')
       }
 
-      await Promise.all(route.legs.map(async leg => {
-        return Promise.all(leg.steps.map(async step => {
-          if (step.travel_mode !== 'TRANSIT') {
-            return;
-          }
-
-          const stepDirections = await new Promise((resolve, reject) => {
-            fetchTransitStepDirections(step.start_location, step.end_location, step.transit
-              .departure_time.value, resolve, reject);
-          });
-
-          if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
-            let agencyName;
-            let agencyFare;
-            stepDirections.routes[0].legs.forEach(leg => leg.steps.forEach(step => {
-              if (step.transit) {
-                step.transit.line.agencies.forEach(agency => {
-                  agencyName = agency.name;
-                });
-              }
-            }));
-
-            if (agencyFareInfo[agencyName]) {
-              agencyFare = agencyFareInfo[agencyName].value;
-            } else if (stepDirections.routes[0].fare) {
-              agencyFare = stepDirections.routes[0].fare.value;
-            } else {
-              agencyFare = 0;
-            }
-
-            fares.push({
-              agency: agencyName,
-              fare: agencyFare,
-              distance: step.distance.value
-            });
-          }
-        }));
-      }));
-
-      const totalFare = _.sumBy(fares, 'fare')
-      const agencyList = _.uniq(_.map(fares, 'agency'))
-      const totalDistance = _.sumBy(fares, 'distance')
+      const faresForTimeRange = applyTimeframeCurrent(transitLegs)
+      const totalFare = _.sumBy(faresForTimeRange, 'fare')
+      const agencyList = _.uniq(_.map(faresForTimeRange, 'agency'))
+      const totalDistance = _.sumBy(faresForTimeRange, 'distance')
+      const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
 
       const fareRange = applyFareClassDiscountsCurrent(totalFare)
       if (noFareAgencies.length > 0) {
@@ -577,7 +720,7 @@
         $('#current-fare-notes').text(pluralize('agency', agencyList.length, true))
       }
 
-      const zoneFare = getZoneFare(drivingRoute)
+      const zoneFare = getZoneFare(drivingDirections.routes[0])
 
       const fare = applyFareClassDiscountsFuture(zoneFare.fare)
       $('#zone-fare').text(currencyFormatter.format(fare))
@@ -589,7 +732,10 @@
       $('#results').show()
       $('body').scrollTo('#results', 1000)
 
-      directionsRenderer.setDirections(transitDirections)
+      if (renderMap === true) {
+        directionsRenderer.setDirections(transitDirections)
+        renderMap = false
+      }
     }
 
     $('#zone-form').submit(event => {
@@ -613,12 +759,73 @@
             fetchDrivingDirections(origin, destination, resolve, reject)
           }),
         ])
-        .then(renderResults)
+        .then(async ([result1, result2]) => {
+          transitDirections = result1
+          drivingDirections = result2
+          renderMap = true
+          transitLegs = []
+
+          const agencyFareInfo = {
+            'AC Transit': {
+              value: 2.5
+            },
+            'Dumbarton Express Consortium': {
+              value: 6
+            }
+          }
+
+          await Promise.all(transitDirections.routes[0].legs.map(async leg => {
+            return Promise.all(leg.steps.map(async step => {
+              if (step.travel_mode !== 'TRANSIT') {
+                return;
+              }
+
+              const stepDirections = await new Promise((resolve, reject) => {
+                fetchTransitStepDirections(step.start_location, step.end_location, step.transit
+                  .departure_time.value, resolve, reject);
+              });
+
+              if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
+                const leg = {
+                  distance: step.distance.value
+                }
+
+                stepDirections.routes[0].legs.forEach(routeLeg => routeLeg.steps.forEach(step => {
+                  if (step.transit) {
+                    step.transit.line.agencies.forEach(agency => {
+                      leg.agency = agency.name;
+                    });
+                  }
+                }));
+
+                if (agencyFareInfo[leg.agency]) {
+                  leg.fare = agencyFareInfo[leg.agency].value;
+                  leg.noFareAgency = true
+                } else if (stepDirections.routes[0].fare) {
+                  leg.fare = stepDirections.routes[0].fare.value;
+                } else {
+                  leg.fare = 0;
+                }
+
+                transitLegs.push(leg);
+              }
+            }));
+          }));
+
+          renderResults();
+        })
         .catch(error => {
           console.error(error)
           $('#results').hide()
           return alert('Unable to compare trip')
         })
+
+      $('#timeframe a').on('click', function (e) {
+        e.preventDefault()
+        $(this).tab('show')
+
+        renderResults()
+      })
     })
   </script>
 
