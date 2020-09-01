@@ -510,83 +510,71 @@
       const route = transitDirections.routes[0]
       const drivingRoute = drivingDirections.routes[0]
 
-      const totals = route.legs.reduce((memo, leg) => {
-        for (const step of leg.steps) {
+      let fares = [];
+      const noFareAgencies = [];
+
+      const agencyFareInfo = {
+        'AC Transit': {
+          value: 2.5
+        },
+        'Dumbarton Express Consortium': {
+          value: 6
+        }
+      }
+
+      await Promise.all(route.legs.map(async leg => {
+        return Promise.all(leg.steps.map(async step => {
           if (step.travel_mode !== 'TRANSIT') {
-            continue
+            return;
           }
 
-          if (step.transit && step.transit.line && step.transit.line.agencies) {
-            memo.agencies.push(...step.transit.line.agencies.map(agency => agency.name))
-          }
+          const stepDirections = await new Promise((resolve, reject) => {
+            fetchTransitStepDirections(step.start_location, step.end_location, step.transit
+              .departure_time.value, resolve, reject);
+          });
 
-          memo.distance += step.distance.value
-        }
-        return memo
-      }, {
-        distance: 0,
-        agencies: []
-      })
+          if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
+            let agencyName;
+            let agencyFare;
+            stepDirections.routes[0].legs.forEach(leg => leg.steps.forEach(step => {
+              if (step.transit) {
+                step.transit.line.agencies.forEach(agency => {
+                  agencyName = agency.name;
+                });
+              }
+            }));
 
-      totals.agencies = _.uniq(totals.agencies)
-
-      if (route.fare) {
-        const fareRange = applyFareClassDiscountsCurrent(route.fare.value)
-        $('#current-fare').text(formatFareRange(fareRange)).toggleClass('fare-range', fareRange.min !== fareRange.max)
-        $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
-      } else {
-        let tripFare = 0;
-        const noFareAgencies = [];
-
-        const agencyFareInfo = {
-          'AC Transit': {
-            value: 2.5
-          },
-          'Dumbarton Express Consortium': {
-            value: 6
-          }
-        }
-
-        await Promise.all(route.legs.map(async leg => {
-          return Promise.all(leg.steps.map(async step => {
-            if (step.travel_mode !== 'TRANSIT') {
-              return;
-            }
-
-            const stepDirections = await new Promise((resolve, reject) => {
-              fetchTransitStepDirections(step.start_location, step.end_location, step.transit
-                .departure_time.value, resolve, reject);
-            });
-
-            if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0 &&
-              stepDirections.routes[0].fare) {
-              tripFare += stepDirections.routes[0].fare.value;
+            if (agencyFareInfo[agencyName]) {
+              agencyFare = agencyFareInfo[agencyName].value;
+            } else if (stepDirections.routes[0].fare) {
+              agencyFare = stepDirections.routes[0].fare.value;
             } else {
-              stepDirections.routes[0].legs.forEach(leg => leg.steps.forEach(step => {
-                if (step.transit) {
-                  step.transit.line.agencies.forEach(agency => {
-                    if (agencyFareInfo[agency.name]) {
-                      tripFare += agencyFareInfo[agency.name].value;
-                    }
-                    noFareAgencies.push(agency.name);
-                  });
-                }
-              }));
+              agencyFare = 0;
             }
-          }));
-        }));
 
-        const fareRange = applyFareClassDiscountsCurrent(tripFare)
-        if (noFareAgencies.length > 0) {
-          $('#current-fare').text(formatFareRange(fareRange)).append('<sup>†</sup>').toggleClass('fare-range', fareRange.min !== fareRange.max)
-          $('#current-fare-notes').html([
-            '<sup>†</sup>',
-            $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
-          ]);
-        } else {
-          $('#current-fare').text(formatFareRange(fareRange)).toggleClass('fare-range', fareRange.min !== fareRange.max)
-          $('#current-fare-notes').text(pluralize('agency', totals.agencies.length, true))
-        }
+            fares.push({
+              agency: agencyName,
+              fare: agencyFare,
+              distance: step.distance.value
+            });
+          }
+        }));
+      }));
+
+      const totalFare = _.sumBy(fares, 'fare')
+      const agencyList = _.uniq(_.map(fares, 'agency'))
+      const totalDistance = _.sumBy(fares, 'distance')
+
+      const fareRange = applyFareClassDiscountsCurrent(totalFare)
+      if (noFareAgencies.length > 0) {
+        $('#current-fare').text(formatFareRange(fareRange)).append('<sup>†</sup>').toggleClass('fare-range', fareRange.min !== fareRange.max)
+        $('#current-fare-notes').html([
+          '<sup>†</sup>',
+          $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
+        ]);
+      } else {
+        $('#current-fare').text(formatFareRange(fareRange)).toggleClass('fare-range', fareRange.min !== fareRange.max)
+        $('#current-fare-notes').text(pluralize('agency', agencyList.length, true))
       }
 
       const zoneFare = getZoneFare(drivingRoute)
@@ -595,8 +583,8 @@
       $('#zone-fare').text(currencyFormatter.format(fare))
       $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
 
-      $('#agencies').text(arrayToSentence(totals.agencies))
-      $('#distance').text(Math.round(metersToMiles(totals.distance) * 10) / 10)
+      $('#agencies').text(arrayToSentence(agencyList))
+      $('#distance').text(Math.round(metersToMiles(totalDistance) * 10) / 10)
 
       $('#results').show()
       $('body').scrollTo('#results', 1000)
