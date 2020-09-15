@@ -8,6 +8,19 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
     integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
   <style>
+    html, body {
+      height:100%;
+      width:100%;
+    }
+
+    a {
+      color: #204285;
+    }
+
+    a:hover {
+      color: hsl(220, 58%, 40%);
+    }
+
     .bg-blue {
       background-color: #204285;
       border-bottom: 2px solid #ECB11E;
@@ -25,8 +38,21 @@
       border-color: hsl(220, 58%, 40%);
     }
 
+    .nav-pills .nav-link.active, .nav-pills .show>.nav-link {
+      color: #fff;
+      background-color: #204285;
+      border-color: #204285;
+    }
+
+    .nav-pills .nav-link.active:hover, .nav-pills .show>.nav-link:hover  {
+      color: #fff;
+      background-color: hsl(220, 58%, 40%);
+      border-color: hsl(220, 58%, 40%);
+    }
+
     .map {
-      height: 400px;
+      width: 100%;
+      height: 100%;
     }
 
     .results {
@@ -46,96 +72,116 @@
       font-size: 1.25rem;
     }
 
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    .reset-button {
+      display: none;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      max-width: 600px;
+    }
+
     @media screen and (min-width: 768px) {
       h2 {
         font-size: 1.75rem;
+      }
+
+      h3 {
+        font-size: 1.25rem;
       }
     }
   </style>
 
   <title>Fare Zone Calculator</title>
+
+  <script src="https://kit.fontawesome.com/c640b06c81.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-  <div class="container py-4 py-md-5">
-    <div class="row">
-      <div class="col-md-8 offset-md-2">
-        <div class="card">
-          <div class="card-body">
-            <h2 class="card-title">Fare Zone Calculator</h2>
-            <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
-            <form id="zone-form">
-              <div class="form-group row">
-                <label for="start-address" class="col-sm-3 col-form-label">Start Address</label>
-                <div class="col-sm-9">
-                  <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
-                </div>
+  <div id="map" class="map"></div>
+  <div class="card overlay">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start">
+        <h2 class="card-title">Fare Zone Calculator</h2>
+        <a href="#" class="btn btn-sm btn-secondary reset-button" id="reset-button"><i class="far fa-redo-alt"></i> Calculate Another Trip</a>
+      </div>
+      <form id="zone-form">
+        <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
+        <div class="form-group row">
+          <label for="start-address" class="col-sm-3 col-form-label">Start Address</label>
+          <div class="col-sm-9">
+            <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
+          </div>
 
-              </div>
-              <div class="form-group row">
-                <label for="end-address" class="col-sm-3 col-form-label">End Address</label>
-                <div class="col-sm-9">
-                  <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
-                </div>
-              </div>
-              <div class="form-group row">
-                <label for="rider-class" class="col-sm-3 col-form-label">Rider Class</label>
-                <div class="col-sm-9">
-                  <select class="form-control" id="rider-class">
-                    <option value="toddler">Toddler (0-5 years)</option>
-                    <option value="child">Child (6-12 years)</option>
-                    <option value="youth">Youth (13-17 years)</option>
-                    <option value="adult" selected>Adult (18-64 years)</option>
-                    <option value="senior">Senior (65+ years)</option>
-                    <option value="disabled">Disabled</option>
-                    <option value="low-income">Low-income</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
-            </form>
+        </div>
+        <div class="form-group row">
+          <label for="end-address" class="col-sm-3 col-form-label">End Address</label>
+          <div class="col-sm-9">
+            <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
           </div>
         </div>
-      </div>
-    </div>
+        <div class="form-group row">
+          <label for="rider-class" class="col-sm-3 col-form-label">Rider Class</label>
+          <div class="col-sm-9">
+            <select class="form-control" id="rider-class">
+              <option value="toddler">Toddler (0-5 years)</option>
+              <option value="child">Child (6-12 years)</option>
+              <option value="youth">Youth (13-17 years)</option>
+              <option value="adult" selected>Adult (18-64 years)</option>
+              <option value="senior">Senior (65+ years)</option>
+              <option value="disabled">Disabled</option>
+              <option value="low-income">Low-income</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
+      </form>
 
-    <div id="results" class="results mt-5">
-      <h2 class="text-center"><span id="distance"></span> mile trip on <span id="agencies"></span></h2>
-      <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
-        <li class="nav-item">
-          <a class="nav-link active" href="#" data-type="single">Single Trip</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#" data-type="daily">Daily</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#" data-type="weekly">Weekly</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#" data-type="monthly">Monthly</a>
-        </li>
-      </ul>
-      <div class="row">
-        <div class="col-md-4 offset-md-2 mb-4">
-          <div class="card h-100">
-            <div class="card-body text-center">
-              <h4>Current Fare</h4>
-              <div class="fare" id="current-fare"></div>
-              <div id="current-fare-notes"></div>
+      <div id="results" class="results">
+        <h3 class="mb-0"><span id="distance"></span> mile trip on <span id="agencies"></span></h3>
+        <div class="mb-3">Rider Class: <span id="rider-info" ></span></div>
+        <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" data-type="single">Single Trip</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-type="daily">Daily</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-type="weekly">Weekly</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-type="monthly">Monthly</a>
+          </li>
+        </ul>
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <div class="card h-100">
+              <div class="card-body text-center">
+                <h4>Current Fare</h4>
+                <div class="fare" id="current-fare"></div>
+                <div id="current-fare-notes"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-2">
+            <div class="card h-100">
+              <div class="card-body text-center">
+                <h4>Zone-Based Fare</h4>
+                <div class="fare" id="zone-fare"></div>
+                <div id="zone-fare-details"></div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="col-md-4 mb-4">
-          <div class="card h-100">
-            <div class="card-body text-center">
-              <h4>Zone-Based Fare</h4>
-              <div class="fare" id="zone-fare"></div>
-              <div id="zone-fare-details"></div>
-            </div>
-          </div>
-        </div>
       </div>
-      <div id="map" class="map"></div>
     </div>
   </div>
 
@@ -150,7 +196,6 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
     integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js" crossorigin="anonymous">
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@mapbox/polyline" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" crossorigin="anonymous"></script>
@@ -327,7 +372,11 @@
           lat: 37.7,
           lng: -122.3
         },
-        styles: mapStyles
+        styles: mapStyles,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          position: google.maps.ControlPosition.BOTTOM_LEFT
+        }
       })
 
       directionsRenderer = new google.maps.DirectionsRenderer({
@@ -727,9 +776,11 @@
 
       $('#agencies').text(arrayToSentence(agencyList))
       $('#distance').text(Math.round(metersToMiles(totalDistance) * 10) / 10)
+      $('#rider-info').text($('#rider-class option:selected').text())
 
-      $('#results').show()
-      $('body').scrollTo('#results', 1000)
+      $('#zone-form').slideUp('fast')
+      $('#results').slideDown('fast')
+      $('#reset-button').fadeIn('fast')
 
       if (renderMap === true) {
         directionsRenderer.setDirections(transitDirections)
@@ -819,8 +870,30 @@
           return alert('Unable to compare trip')
         })
 
-      $('#timeframe a').on('click', function (e) {
-        e.preventDefault()
+      $('#reset-button').click(event => {
+        event.preventDefault()
+
+        $('#zone-form').slideDown('fast')
+        $('#results').slideUp('fast')
+        $('#reset-button').fadeOut('fast')
+
+        autocomplete_origin.set('place',null);
+        autocomplete_destination.set('place',null);
+
+        $('#start-address').val('')
+        $('#end-address').val('')
+        $('#rider-class').val('adult')
+        $('#timeframe a').each((index, el) => {
+          if ($(el).data('type') === 'single') {
+            $(el).addClass('active')
+          } else {
+            $(el).removeClass('active')
+          }
+        })
+      })
+
+      $('#timeframe a').on('click', function (event) {
+        event.preventDefault()
         $(this).tab('show')
 
         renderResults()
