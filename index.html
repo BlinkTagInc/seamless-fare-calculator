@@ -52,7 +52,7 @@
 
     .map {
       width: 100%;
-      height: 100%;
+      height: 300px;
     }
 
     .results {
@@ -60,12 +60,14 @@
     }
 
     .fare {
-      font-size: 60px;
+      font-size: 42px;
       font-weight: bold;
+      line-height: 1;
+      padding: 6px 0;
     }
 
     .fare.fare-range {
-      font-size: 44px;
+      font-size: 32px;
     }
 
     h2 {
@@ -76,19 +78,41 @@
       font-size: 1.25rem;
     }
 
+    h4 {
+      font-size: 1.3rem;
+    }
+
+    .zone-form .col-form-label {
+      width: 100px;
+    }
+
     .reset-button {
       display: none;
     }
 
-    .overlay {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1;
-      max-width: 600px;
+    .panel {
+      padding: 10px 15px;
+      flex-shrink: 0;
+      position: relative;
     }
 
-    @media screen and (min-width: 768px) {
+    .footer-credits {
+      position: absolute;
+      bottom: 10px;
+      left: 15px;
+      font-size: 12px;
+    }
+
+    @media screen and (min-width: 992px) {
+      .panel {
+        width: 500px;
+      }
+
+      .map {
+        width: 100%;
+        height: 100%;
+      }
+
       h2 {
         font-size: 1.75rem;
       }
@@ -105,41 +129,33 @@
 </head>
 
 <body>
-  <div id="map" class="map"></div>
-  <div class="card overlay">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-start">
-        <h2 class="card-title">Fare Zone Calculator</h2>
-        <a href="#" class="btn btn-sm btn-secondary reset-button" id="reset-button"><i class="far fa-redo-alt"></i> Calculate Another Trip</a>
+  <div class="d-block d-lg-flex h-100">
+    <div class="panel">
+      <div class="d-flex align-items-end mb-3">
+        <a href="https://www.seamlessbayarea.org/" class="logo"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
+        <h2 class="card-title ml-3 mb-0">Fare Zone Calculator</h2>
       </div>
-      <form id="zone-form">
+      <form id="zone-form" class="zone-form">
         <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
-        <div class="form-group row">
-          <label for="start-address" class="col-sm-3 col-form-label">Start Address</label>
-          <div class="col-sm-9">
-            <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
-          </div>
-
+        <div class="form-group d-flex">
+          <label for="start-address" class="col-form-label mr-3 flex-shrink-0">Start Address</label>
+          <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
         </div>
-        <div class="form-group row">
-          <label for="end-address" class="col-sm-3 col-form-label">End Address</label>
-          <div class="col-sm-9">
-            <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
-          </div>
+        <div class="form-group d-flex">
+          <label for="end-address" class="col-form-label mr-3 flex-shrink-0">End Address</label>
+          <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
         </div>
-        <div class="form-group row">
-          <label for="rider-class" class="col-sm-3 col-form-label">Rider Class</label>
-          <div class="col-sm-9">
-            <select class="form-control" id="rider-class">
-              <option value="toddler">Toddler (0-5 years)</option>
-              <option value="child">Child (6-12 years)</option>
-              <option value="youth">Youth (13-17 years)</option>
-              <option value="adult" selected>Adult (18-64 years)</option>
-              <option value="senior">Senior (65+ years)</option>
-              <option value="disabled">Disabled</option>
-              <option value="low-income">Low-income</option>
-            </select>
-          </div>
+        <div class="form-group d-flex">
+          <label for="rider-class" class="col-form-label mr-3 flex-shrink-0">Rider Class</label>
+          <select class="form-control" id="rider-class">
+            <option value="toddler">Toddler (0-5 years)</option>
+            <option value="child">Child (6-12 years)</option>
+            <option value="youth">Youth (13-17 years)</option>
+            <option value="adult" selected>Adult (18-64 years)</option>
+            <option value="senior">Senior (65+ years)</option>
+            <option value="disabled">Disabled</option>
+            <option value="low-income">Low-income</option>
+          </select>
         </div>
         <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
       </form>
@@ -181,8 +197,13 @@
             </div>
           </div>
         </div>
+
+        <a href="#" class="btn btn-sm btn-secondary btn-block reset-button" id="reset-button"><i class="far fa-redo-alt"></i> Calculate Another Trip</a>
       </div>
+
+      <div class="footer-credits">Created by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
     </div>
+    <div id="map" class="map"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"
@@ -372,11 +393,7 @@
           lat: 37.7,
           lng: -122.3
         },
-        styles: mapStyles,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          position: google.maps.ControlPosition.BOTTOM_LEFT
-        }
+        styles: mapStyles
       })
 
       directionsRenderer = new google.maps.DirectionsRenderer({
@@ -783,6 +800,7 @@
       $('#reset-button').fadeIn('fast')
 
       if (renderMap === true) {
+        directionsRenderer.setMap(map)
         directionsRenderer.setDirections(transitDirections)
         renderMap = false
       }
@@ -877,8 +895,10 @@
         $('#results').slideUp('fast')
         $('#reset-button').fadeOut('fast')
 
-        autocomplete_origin.set('place',null);
-        autocomplete_destination.set('place',null);
+        autocomplete_origin.set('place', null);
+        autocomplete_destination.set('place', null)
+
+        directionsRenderer.setMap(null)
 
         $('#start-address').val('')
         $('#end-address').val('')
