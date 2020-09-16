@@ -97,9 +97,6 @@
     }
 
     .footer-credits {
-      position: absolute;
-      bottom: 10px;
-      left: 15px;
       font-size: 12px;
     }
 
@@ -130,69 +127,71 @@
 
 <body>
   <div class="d-block d-lg-flex h-100">
-    <div class="panel">
-      <div class="d-flex align-items-end mb-3">
-        <a href="https://www.seamlessbayarea.org/" class="logo"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
-        <h2 class="card-title ml-3 mb-0">Fare Zone Calculator</h2>
-      </div>
-      <form id="zone-form" class="zone-form">
-        <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
-        <div class="form-group d-flex">
-          <label for="start-address" class="col-form-label mr-3 flex-shrink-0">Start Address</label>
-          <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
+    <div class="panel d-flex flex-column justify-content-between">
+      <div>
+        <div class="d-flex align-items-end mb-3">
+          <a href="https://www.seamlessbayarea.org/" class="logo"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
+          <h2 class="card-title ml-3 mb-0">Fare Zone Calculator</h2>
         </div>
-        <div class="form-group d-flex">
-          <label for="end-address" class="col-form-label mr-3 flex-shrink-0">End Address</label>
-          <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
-        </div>
-        <div class="form-group d-flex">
-          <label for="rider-class" class="col-form-label mr-3 flex-shrink-0">Rider Class</label>
-          <select class="form-control" id="rider-class">
-            <option value="toddler">Toddler (0-5 years)</option>
-            <option value="child">Child (6-12 years)</option>
-            <option value="youth">Youth (13-17 years)</option>
-            <option value="adult" selected>Adult (18-64 years)</option>
-            <option value="senior">Senior (65+ years)</option>
-            <option value="disabled">Disabled</option>
-            <option value="low-income">Low-income</option>
-          </select>
-        </div>
-        <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
-      </form>
+        <form id="zone-form" class="zone-form">
+          <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
+          <div class="form-group d-flex">
+            <label for="start-address" class="col-form-label mr-3 flex-shrink-0">Start Address</label>
+            <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
+          </div>
+          <div class="form-group d-flex">
+            <label for="end-address" class="col-form-label mr-3 flex-shrink-0">End Address</label>
+            <input type="text" class="form-control" id="end-address" placeholder="Walnut Creek" />
+          </div>
+          <div class="form-group d-flex">
+            <label for="rider-class" class="col-form-label mr-3 flex-shrink-0">Rider Class</label>
+            <select class="form-control" id="rider-class">
+              <option value="toddler">Toddler (0-5 years)</option>
+              <option value="child">Child (6-12 years)</option>
+              <option value="youth">Youth (13-17 years)</option>
+              <option value="adult" selected>Adult (18-64 years)</option>
+              <option value="senior">Senior (65+ years)</option>
+              <option value="disabled">Disabled</option>
+              <option value="low-income">Low-income</option>
+            </select>
+          </div>
+          <button class="btn btn-blue btn-lg mt-4 btn-block" type="submit">Calculate</button>
+        </form>
 
-      <div id="results" class="results">
-        <h3 class="mb-0"><span id="distance"></span> mile trip on <span id="agencies"></span></h3>
-        <div class="mb-3">Rider Class: <span id="rider-info" ></span></div>
-        <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
-          <li class="nav-item">
-            <a class="nav-link active" href="#" data-type="single">Single Trip</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-type="daily">Daily</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-type="weekly">Weekly</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-type="monthly">Monthly</a>
-          </li>
-        </ul>
-        <div class="row">
-          <div class="col-md-6 mb-2">
-            <div class="card h-100">
-              <div class="card-body text-center">
-                <h4>Current Fare</h4>
-                <div class="fare" id="current-fare"></div>
-                <div id="current-fare-notes"></div>
+        <div id="results" class="results">
+          <h3 class="mb-0"><span id="distance"></span> mile trip on <span id="agencies"></span></h3>
+          <div class="mb-3">Rider Class: <span id="rider-info" ></span></div>
+          <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
+            <li class="nav-item">
+              <a class="nav-link active" href="#" data-type="single">Single Trip</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-type="daily">Daily</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-type="weekly">Weekly</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-type="monthly">Monthly</a>
+            </li>
+          </ul>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <div class="card h-100">
+                <div class="card-body text-center">
+                  <h4>Current Fare</h4>
+                  <div class="fare" id="current-fare"></div>
+                  <div id="current-fare-notes"></div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="col-md-6 mb-2">
-            <div class="card h-100">
-              <div class="card-body text-center">
-                <h4>Zone-Based Fare</h4>
-                <div class="fare" id="zone-fare"></div>
-                <div id="zone-fare-details"></div>
+            <div class="col-md-6 mb-2">
+              <div class="card h-100">
+                <div class="card-body text-center">
+                  <h4>Zone-Based Fare</h4>
+                  <div class="fare" id="zone-fare"></div>
+                  <div id="zone-fare-details"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -201,7 +200,7 @@
         <a href="#" class="btn btn-sm btn-secondary btn-block reset-button" id="reset-button"><i class="far fa-redo-alt"></i> Calculate Another Trip</a>
       </div>
 
-      <div class="footer-credits">Created by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
+      <div class="footer-credits mt-3">Created by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
     </div>
     <div id="map" class="map"></div>
   </div>
