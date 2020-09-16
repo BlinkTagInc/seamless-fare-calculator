@@ -761,13 +761,17 @@
       return `${currencyFormatter.format(fareRange.max)} - ${currencyFormatter.format(fareRange.min)}`
     }
 
+    function sumFares(faresForTimeRange) {
+      return _.sumBy(_.uniqBy(faresForTimeRange, 'agency'), 'fare')
+    }
+
     async function renderResults() {
       if (!transitDirections || !drivingDirections) {
         return  alert('No directions found.')
       }
 
       const faresForTimeRange = applyTimeframeCurrent(transitLegs)
-      const totalFare = _.sumBy(faresForTimeRange, 'fare')
+      const totalFare = sumFares(faresForTimeRange)
       const agencyList = _.uniq(_.map(faresForTimeRange, 'agency'))
       const totalDistance = _.sumBy(faresForTimeRange, 'distance')
       const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
