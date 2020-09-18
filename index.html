@@ -100,6 +100,10 @@
       font-size: 12px;
     }
 
+    .note {
+      font-size: 12px;
+    }
+
     @media screen and (min-width: 992px) {
       .panel {
         width: 500px;
@@ -149,6 +153,7 @@
               <option value="toddler">Toddler (0-5 years)</option>
               <option value="child">Child (6-12 years)</option>
               <option value="youth">Youth (13-17 years)</option>
+              <option value="student">Student</option>
               <option value="adult" selected>Adult (18-64 years)</option>
               <option value="senior">Senior (65+ years)</option>
               <option value="disabled">Disabled</option>
@@ -696,6 +701,10 @@
           minDiscount: 0,
           maxDiscount: 0.75
         },
+        student: {
+          minDiscount: 0,
+          maxDiscount: 0
+        },
         adult: {
           minDiscount: 0,
           maxDiscount: 0
@@ -735,6 +744,9 @@
         youth: {
           discount: 0.5
         },
+        student: {
+          discount: 0.5
+        },
         adult: {
           discount: 0
         },
@@ -770,6 +782,8 @@
         return  alert('No directions found.')
       }
 
+      const fareClass = $('#rider-class').val()
+
       const faresForTimeRange = applyTimeframeCurrent(transitLegs)
       const totalFare = sumFares(faresForTimeRange)
       const agencyList = _.uniq(_.map(faresForTimeRange, 'agency'))
@@ -777,16 +791,37 @@
       const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
 
       const fareRange = applyFareClassDiscountsCurrent(totalFare)
+      const currentFareNotes = []
+      const currentFareNotesAsterisks = []
+
       if (noFareAgencies.length > 0) {
-        $('#current-fare').text(formatFareRange(fareRange)).append('<sup>†</sup>').toggleClass('fare-range', fareRange.min !== fareRange.max)
-        $('#current-fare-notes').html([
-          '<sup>†</sup>',
-          $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
-        ]);
-      } else {
-        $('#current-fare').text(formatFareRange(fareRange)).toggleClass('fare-range', fareRange.min !== fareRange.max)
-        $('#current-fare-notes').text(pluralize('agency', agencyList.length, true))
+        currentFareNotesAsterisks.push('†')
+        currentFareNotes.push(
+          $('<div>').addClass('note').html([
+            '<sup>†</sup>',
+            $('<span>').text(`Incomplete fare information from ${_.uniq(noFareAgencies).join(' and ')}.`)
+          ])
+        )
       }
+
+      if (fareClass === 'student') {
+        currentFareNotesAsterisks.push('‡')
+        currentFareNotes.push(
+          $('<div>').addClass('note').html([
+            '<sup>‡</sup>',
+            $('<span>').text('Student discounts vary by educational institution and are impossible to predict. Adult fare shown.')
+          ])
+        )
+      }
+
+      currentFareNotes.push($('<div>').text(pluralize('agency', agencyList.length, true)))
+
+      $('#current-fare-notes').html(currentFareNotes)
+
+      $('#current-fare')
+        .text(formatFareRange(fareRange))
+        .toggleClass('fare-range', fareRange.min !== fareRange.max)
+        .append(currentFareNotesAsterisks.map(asterisk => $('<sup>').text(asterisk))) 
 
       const zoneFare = getZoneFare(drivingDirections.routes[0])
 
