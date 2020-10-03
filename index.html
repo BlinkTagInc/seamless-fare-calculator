@@ -70,6 +70,13 @@
       font-size: 32px;
     }
 
+    .edit-button {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      color: #8a8a67;
+    }
+
     h2 {
       font-size: 1.25rem;
     }
@@ -198,6 +205,7 @@
             <div class="col-md-6 mb-2">
               <div class="card h-100">
                 <div class="card-body text-center">
+                  <a class="edit-button" href="#" id="edit-fare"><i class="fas fa-pencil-alt" title="Edit Fare"></i></a>
                   <h4>Current Fare</h4>
                   <div class="fare" id="current-fare"></div>
                   <div id="current-fare-notes"></div>
@@ -254,6 +262,7 @@
     let renderMap = true
     let origin
     let destination
+    let editedFare
 
     fetch('/data/farezones.json')
       .then(result => result.json())
@@ -799,16 +808,27 @@
       }
 
       const fareClass = $('#rider-class').val()
+      const currentFareNotes = []
+      const currentFareNotesAsterisks = []
+
+      if (editedFare) {
+        transitLegs = [
+          {
+            fare: editedFare
+          }
+        ]
+
+        currentFareNotes.push(
+          $('<div>').addClass('note').text('Fare manually edited.')
+        )
+      }
 
       const faresForTimeRange = applyTimeframeCurrent(transitLegs)
       const totalFare = sumFares(faresForTimeRange)
       const agencyList = _.uniq(_.map(faresForTimeRange, 'agency'))
       const totalDistance = _.sumBy(faresForTimeRange, 'distance')
       const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
-
       const fareRange = applyFareClassDiscountsCurrent(totalFare)
-      const currentFareNotes = []
-      const currentFareNotesAsterisks = []
 
       if (noFareAgencies.length > 0) {
         currentFareNotesAsterisks.push('†')
@@ -966,11 +986,34 @@
             $(el).removeClass('active')
           }
         })
+
+        editedFare = null
       })
 
-      $('#timeframe a').on('click', function (event) {
+      $('#timeframe a').on('click', event => {
         event.preventDefault()
-        $(this).tab('show')
+        $(event.target).tab('show')
+
+        renderResults()
+      })
+
+      $('#edit-fare').click(event => {
+        event.preventDefault()
+        const userInput = prompt('Enter correct one-way single fare', '2.00')
+
+        if (userInput === undefined) {
+          return
+        }
+
+        const processedUserInput = parseFloat(userInput.replace(/\$/g, ''))
+
+        if (isNaN(processedUserInput)) {
+          return alert('Fare submitted is not a valid number.')
+        } else if (processedUserInput <= 0) {
+          return alert('Fare submitted is not a positive number.')
+        }
+
+        editedFare = processedUserInput
 
         renderResults()
       })
