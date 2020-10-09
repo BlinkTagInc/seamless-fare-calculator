@@ -50,6 +50,10 @@
       border-color: hsl(220, 58%, 40%);
     }
 
+    .card-title {
+      font-size: 23px;
+    }
+
     .map {
       width: 100%;
       height: 300px;
@@ -101,15 +105,24 @@
       padding: 10px 15px;
       flex-shrink: 0;
       position: relative;
+      overflow-y: scroll  ;
     }
 
     .footer-credits {
       font-size: 12px;
+      line-height: 1;
     }
 
     .note {
       font-size: 12px;
       background-color: yellow;
+      line-height: 1;
+      padding: 5px;
+      text-align: left;
+    }
+
+    .notes {
+      font-size: 12px;
     }
 
     .formatted-address {
@@ -137,7 +150,7 @@
     }
   </style>
 
-  <title>Fare Zone Calculator</title>
+  <title>Bay Area Integrated Transit Fare Vision Map</title>
 
   <script src="https://kit.fontawesome.com/c640b06c81.js" crossorigin="anonymous"></script>
 </head>
@@ -146,12 +159,11 @@
   <div class="d-block d-lg-flex h-100">
     <div class="panel d-flex flex-column justify-content-between">
       <div>
-        <div class="d-flex align-items-end mb-3">
-          <a href="https://www.seamlessbayarea.org/" class="logo"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
-          <h2 class="card-title ml-3 mb-0">Fare Zone Calculator</h2>
-        </div>
+        <h1 class="card-title mb-0">Bay Area Integrated Transit Fare Vision Map</h1>
+        <div class="font-italic mb-3" style="font-size: 13px;">Created by <a href="https://www.seamlessbayarea.org/">Seamless Bay Area</a></div>
         <form id="zone-form" class="zone-form">
-          <p>Enter a start and end location and see the current transit fare compared to a zone based fare.</p>
+          <p>Compare the cost of a transit trip today with Seamless Bay Area’s vision of an integrated, zone-based fare system.</p>
+          <p>Enter a start and end location:</p>
           <div class="form-group d-flex">
             <label for="start-address" class="col-form-label mr-3 flex-shrink-0">Start Address</label>
             <input type="text" class="form-control" id="start-address" placeholder="Haight & Ashbury" />
@@ -179,13 +191,15 @@
         <div id="results" class="results">
           <h3 class="mb-0"><span id="distance"></span> mile trip on <span id="agencies"></span></h3>
           <div class="mb-1">Rider Class: <span id="rider-info" ></span></div>
-          <div class="d-flex mb-1 align-items-center">
-            <img alt="" src="data:image/svg+xml,%3Csvg%20version%3D%221.1%22%20width%3D%2227px%22%20height%3D%2243px%22%20viewBox%3D%220%200%2027%2043%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%3Cdefs%3E%0A%3Cpath%20id%3D%22a%22%20d%3D%22m12.5%200c-6.9039%200-12.5%205.5961-12.5%2012.5%200%201.8859%200.54297%203.7461%201.4414%205.4617%203.425%206.6156%2010.216%2013.566%2010.216%2022.195%200%200.46562%200.37734%200.84297%200.84297%200.84297s0.84297-0.37734%200.84297-0.84297c0-8.6289%206.7906-15.58%2010.216-22.195%200.89844-1.7156%201.4414-3.5758%201.4414-5.4617%200-6.9039-5.5961-12.5-12.5-12.5z%22%2F%3E%0A%3C%2Fdefs%3E%0A%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%3Cg%20transform%3D%22translate(1%201)%22%3E%0A%3Cuse%20fill%3D%22%23EA4335%22%20fill-rule%3D%22evenodd%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%0A%3Cpath%20d%3D%22m12.5-0.5c7.18%200%2013%205.82%2013%2013%200%201.8995-0.52398%203.8328-1.4974%205.6916-0.91575%201.7688-1.0177%201.9307-4.169%206.7789-4.2579%206.5508-5.9907%2010.447-5.9907%2015.187%200%200.74177-0.6012%201.343-1.343%201.343s-1.343-0.6012-1.343-1.343c0-4.7396-1.7327-8.6358-5.9907-15.187-3.1512-4.8482-3.2532-5.01-4.1679-6.7768-0.97449-1.8608-1.4985-3.7942-1.4985-5.6937%200-7.18%205.82-13%2013-13z%22%20stroke%3D%22%23fff%22%2F%3E%0A%3C%2Fg%3E%0A%3Ctext%20text-anchor%3D%22middle%22%20dy%3D%220.3em%22%20x%3D%2214%22%20y%3D%2215%22%20font-family%3D%22Roboto%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2216px%22%20fill%3D%22%23FFF%22%3EA%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A" draggable="false" usemap="#gmimap0" style="width: 13px; height: 21px;">
-            <div id="origin" class="formatted-address ml-1"></div>
-          </div>
-          <div class="d-flex mb-3 align-items-center">
-            <img alt="" src="data:image/svg+xml,%3Csvg%20version%3D%221.1%22%20width%3D%2227px%22%20height%3D%2243px%22%20viewBox%3D%220%200%2027%2043%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%3Cdefs%3E%0A%3Cpath%20id%3D%22a%22%20d%3D%22m12.5%200c-6.9039%200-12.5%205.5961-12.5%2012.5%200%201.8859%200.54297%203.7461%201.4414%205.4617%203.425%206.6156%2010.216%2013.566%2010.216%2022.195%200%200.46562%200.37734%200.84297%200.84297%200.84297s0.84297-0.37734%200.84297-0.84297c0-8.6289%206.7906-15.58%2010.216-22.195%200.89844-1.7156%201.4414-3.5758%201.4414-5.4617%200-6.9039-5.5961-12.5-12.5-12.5z%22%2F%3E%0A%3C%2Fdefs%3E%0A%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%3Cg%20transform%3D%22translate(1%201)%22%3E%0A%3Cuse%20fill%3D%22%23EA4335%22%20fill-rule%3D%22evenodd%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%0A%3Cpath%20d%3D%22m12.5-0.5c7.18%200%2013%205.82%2013%2013%200%201.8995-0.52398%203.8328-1.4974%205.6916-0.91575%201.7688-1.0177%201.9307-4.169%206.7789-4.2579%206.5508-5.9907%2010.447-5.9907%2015.187%200%200.74177-0.6012%201.343-1.343%201.343s-1.343-0.6012-1.343-1.343c0-4.7396-1.7327-8.6358-5.9907-15.187-3.1512-4.8482-3.2532-5.01-4.1679-6.7768-0.97449-1.8608-1.4985-3.7942-1.4985-5.6937%200-7.18%205.82-13%2013-13z%22%20stroke%3D%22%23fff%22%2F%3E%0A%3C%2Fg%3E%0A%3Ctext%20text-anchor%3D%22middle%22%20dy%3D%220.3em%22%20x%3D%2214%22%20y%3D%2215%22%20font-family%3D%22Roboto%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2216px%22%20fill%3D%22%23FFF%22%3EB%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A" draggable="false" usemap="#gmimap1" style="width: 13px; height: 21px;">
-            <div id="destination" class="formatted-address ml-1"></div>
+          <div class="d-md-flex mb-3">
+            <div class="d-flex mb-1 mb-md-0 align-items-center" style="flex: 1;">
+              <img alt="" src="data:image/svg+xml,%3Csvg%20version%3D%221.1%22%20width%3D%2227px%22%20height%3D%2243px%22%20viewBox%3D%220%200%2027%2043%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%3Cdefs%3E%0A%3Cpath%20id%3D%22a%22%20d%3D%22m12.5%200c-6.9039%200-12.5%205.5961-12.5%2012.5%200%201.8859%200.54297%203.7461%201.4414%205.4617%203.425%206.6156%2010.216%2013.566%2010.216%2022.195%200%200.46562%200.37734%200.84297%200.84297%200.84297s0.84297-0.37734%200.84297-0.84297c0-8.6289%206.7906-15.58%2010.216-22.195%200.89844-1.7156%201.4414-3.5758%201.4414-5.4617%200-6.9039-5.5961-12.5-12.5-12.5z%22%2F%3E%0A%3C%2Fdefs%3E%0A%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%3Cg%20transform%3D%22translate(1%201)%22%3E%0A%3Cuse%20fill%3D%22%23EA4335%22%20fill-rule%3D%22evenodd%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%0A%3Cpath%20d%3D%22m12.5-0.5c7.18%200%2013%205.82%2013%2013%200%201.8995-0.52398%203.8328-1.4974%205.6916-0.91575%201.7688-1.0177%201.9307-4.169%206.7789-4.2579%206.5508-5.9907%2010.447-5.9907%2015.187%200%200.74177-0.6012%201.343-1.343%201.343s-1.343-0.6012-1.343-1.343c0-4.7396-1.7327-8.6358-5.9907-15.187-3.1512-4.8482-3.2532-5.01-4.1679-6.7768-0.97449-1.8608-1.4985-3.7942-1.4985-5.6937%200-7.18%205.82-13%2013-13z%22%20stroke%3D%22%23fff%22%2F%3E%0A%3C%2Fg%3E%0A%3Ctext%20text-anchor%3D%22middle%22%20dy%3D%220.3em%22%20x%3D%2214%22%20y%3D%2215%22%20font-family%3D%22Roboto%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2216px%22%20fill%3D%22%23FFF%22%3EA%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A" draggable="false" usemap="#gmimap0" style="width: 13px; height: 21px;">
+              <div id="origin" class="formatted-address ml-1"></div>
+            </div>
+            <div class="d-flex align-items-center" style="flex: 1">
+              <img alt="" src="data:image/svg+xml,%3Csvg%20version%3D%221.1%22%20width%3D%2227px%22%20height%3D%2243px%22%20viewBox%3D%220%200%2027%2043%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%3Cdefs%3E%0A%3Cpath%20id%3D%22a%22%20d%3D%22m12.5%200c-6.9039%200-12.5%205.5961-12.5%2012.5%200%201.8859%200.54297%203.7461%201.4414%205.4617%203.425%206.6156%2010.216%2013.566%2010.216%2022.195%200%200.46562%200.37734%200.84297%200.84297%200.84297s0.84297-0.37734%200.84297-0.84297c0-8.6289%206.7906-15.58%2010.216-22.195%200.89844-1.7156%201.4414-3.5758%201.4414-5.4617%200-6.9039-5.5961-12.5-12.5-12.5z%22%2F%3E%0A%3C%2Fdefs%3E%0A%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%3Cg%20transform%3D%22translate(1%201)%22%3E%0A%3Cuse%20fill%3D%22%23EA4335%22%20fill-rule%3D%22evenodd%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%0A%3Cpath%20d%3D%22m12.5-0.5c7.18%200%2013%205.82%2013%2013%200%201.8995-0.52398%203.8328-1.4974%205.6916-0.91575%201.7688-1.0177%201.9307-4.169%206.7789-4.2579%206.5508-5.9907%2010.447-5.9907%2015.187%200%200.74177-0.6012%201.343-1.343%201.343s-1.343-0.6012-1.343-1.343c0-4.7396-1.7327-8.6358-5.9907-15.187-3.1512-4.8482-3.2532-5.01-4.1679-6.7768-0.97449-1.8608-1.4985-3.7942-1.4985-5.6937%200-7.18%205.82-13%2013-13z%22%20stroke%3D%22%23fff%22%2F%3E%0A%3C%2Fg%3E%0A%3Ctext%20text-anchor%3D%22middle%22%20dy%3D%220.3em%22%20x%3D%2214%22%20y%3D%2215%22%20font-family%3D%22Roboto%2C%20Arial%2C%20sans-serif%22%20font-size%3D%2216px%22%20fill%3D%22%23FFF%22%3EB%3C%2Ftext%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A" draggable="false" usemap="#gmimap1" style="width: 13px; height: 21px;">
+              <div id="destination" class="formatted-address ml-1"></div>
+            </div>
           </div>
           <ul class="nav nav-pills justify-content-center mb-4" id="timeframe">
             <li class="nav-item">
@@ -195,12 +209,10 @@
               <a class="nav-link" href="#" data-type="daily">Daily</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" data-type="weekly">Weekly</a>
-            </li>
-            <li class="nav-item">
               <a class="nav-link" href="#" data-type="monthly">Monthly</a>
             </li>
           </ul>
+
           <div class="row">
             <div class="col-md-6 mb-2">
               <div class="card h-100">
@@ -217,19 +229,46 @@
                 <div class="card-body text-center">
                   <h4>Zone-Based Fare</h4>
                   <div class="fare" id="zone-fare"></div>
-                  <div id="zone-fare-details"></div>
+                  <div id="zone-fare-notes"></div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
+          <div class="row">
+            <div class="col-md-6 offset-md-6" id="single-fare-table">
+              <img src="/images/single-fare-table.png" class="w-100" />
+            </div>
+            <div class="col-md-6 offset-md-6" id="daily-cap-table">
+              <img src="/images/daily-cap-table.png" class="w-100" />
+            </div>
+            <div class="col-md-6 offset-md-6" id="monthly-cap-table">
+              <img src="/images/monthly-cap-table.png" class="w-100" />
+            </div>
+          </div>
+
+          <div class="notes my-2" id="overall-notes"></div>
+        </div>
         <a href="#" class="btn btn-sm btn-secondary btn-block reset-button" id="reset-button"><i class="far fa-redo-alt"></i> Calculate Another Trip</a>
       </div>
 
-      <div class="footer-credits mt-3">Created by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
+      <div class="mt-3 d-none d-md-block">
+        <div class="mb-2">Have questions about this map? See our <a href="https://www.seamlessbayarea.org/integrated-fare-vision">FAQ</a>.</div>
+        <div class="d-flex justify-content-between align-items-end">
+          <a href="https://www.seamlessbayarea.org/" class="d-block flex-shrink-1"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
+          <div class="footer-credits ml-3 text-right">Developed by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
+        </div>
+      </div>
     </div>
-    <div id="map" class="map"></div>
+    <div id="map" class="map mt-3 mt-md-0"></div>
+
+    <div class="p-3 d-md-none">
+      <div class="mb-3" style="font-size: 13px;">Have questions about this map? See our <a href="https://www.seamlessbayarea.org/integrated-fare-vision">FAQ</a>.</div>
+      <div class="d-flex justify-content-between align-items-end">
+        <a href="https://www.seamlessbayarea.org/" class="d-block flex-shrink-1"><img src="/images/logo.png" alt="Seamless Bay Area" width="150" height="42" /></a>
+        <div class="footer-credits ml-3 text-right">Developed by <a href="https://blinktag.com" target="_blank">BlinkTag Inc</a></div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"
@@ -479,7 +518,6 @@
       const timeFrameMultipliers = {
         'single': 1,
         'daily': 3,
-        'weekly': 9,
         'monthly': 36
       }
 
@@ -552,139 +590,116 @@
         'AC Transit': {
           single: 1,
           daily: 2.2,
-          weekly: 9,
           monthly: 36,
         },
         'Bay Area Rapid Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 36
         },
         'Caltrain': {
           single: 1,
           daily: 2,
-          weekly: 9,
           monthly: 27
         },
         'County Connection': {
           single: 1,
           daily: 1.9,
-          weekly: 9,
           monthly: 30
         },
         'Dumbarton Express': {
           single: 1,
           daily: 2.2,
-          weekly: 9,
           monthly: 36
         },
         'Fairfield and Suisun Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 34
         },
         'Golden Gate Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 36
         },
         'Marin Transit': {
           single: 1,
           daily: 2.8,
-          weekly: 9,
           monthly: 22
         },
         'San Francisco Municipal Transportation Agency': {
           single: 1,
           daily: 7.6,
-          weekly: 15.3,
           monthly: 27
         },
         'Petaluma Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 20
         },
         'SamTrans': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 29
         },
         'Santa Rosa CityBus': {
           single: 1,
           daily: 2.7,
-          weekly: 9,
           monthly: 33
           },
         'San Francisco Bay Ferry': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 36
         },
         'Sonoma Marin Area Rail Transit': {
           single: 1,
           daily: 3.1,
-          weekly: 9,
           monthly: 27
         },
         'SolTrans': {
           single: 1,
           daily: 2.3,
-          weekly: 9,
           monthly: 32
         },
         'Sonoma County Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 28
         },
         'Tri Delta Transit': {
           single: 1,
           daily: 1.9,
-          weekly: 9,
           monthly: 29
         },
         'Union City Transit': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 28
         },
         'Vacaville City Coach': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 24
         },
         'Napa': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 40
         },
         'VTA': {
           single: 1,
           daily: 3,
-          weekly: 9,
           monthly: 35
         },
         'WestCat (Western Contra Costa)': {
           single: 1,
           daily: 2.1,
-          weekly: 9,
           monthly: 23
         },
         'Livermore Amador Valley Transit Authority': {
           single: 1,
           daily: 1.9,
-          weekly: 9,
           monthly: 30
         }
       }
@@ -692,7 +707,6 @@
       const defaultAgency =  {
         single: 1,
         daily: 3,
-        weekly: 9,
         monthly: 36
       }
 
@@ -807,9 +821,12 @@
         return  alert('No directions found.')
       }
 
+      const timeframe = $('#timeframe a.active').data('type');
       const fareClass = $('#rider-class').val()
       const currentFareNotes = []
       const currentFareNotesAsterisks = []
+      const zoneFareNotes = []
+      const overallNotes = []
 
       if (editedFare) {
         transitLegs = [
@@ -829,6 +846,9 @@
       const totalDistance = _.sumBy(faresForTimeRange, 'distance')
       const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
       const fareRange = applyFareClassDiscountsCurrent(totalFare)
+      const zoneFare = getZoneFare(drivingDirections.routes[0])
+
+      currentFareNotes.push($('<div>').text(pluralize('agency', agencyList.length, true)))
 
       if (noFareAgencies.length > 0) {
         currentFareNotesAsterisks.push('†')
@@ -849,8 +869,29 @@
           ])
         )
       }
+      zoneFareNotes.push(
+        $('<div>').text(pluralize('zone', zoneFare.zoneCount, true))
+      )
 
-      currentFareNotes.push($('<div>').text(pluralize('agency', agencyList.length, true)))
+      zoneFareNotes.push(
+        $('<div>').addClass('note').text('Number of zones is an estimate, based on driving directions and may be off by 1-2 zones.')
+      )
+
+      overallNotes.push(
+        $('<div>').html('“Current fare” indicates the cost of the first result generated by Google Maps for travel at 8am on a Monday morning. For more information see <a href="https://www.seamlessbayarea.org/integrated-fare-vision">FAQ</a>.')
+      ) 
+
+      if (timeframe === 'daily') {
+        overallNotes.push(
+          $('<div>').html('Assumes 3 trips / day; includes cost of any regular passes currently provided by agencies for daily travel.')
+        )
+      }
+
+      if (timeframe === 'monthly') {
+        overallNotes.push(
+          $('<div>').html('Assumes 36 trips / month; includes cost of any regular passes currently provided by agencies for daily travel.')
+        )
+      }
 
       $('#current-fare-notes').html(currentFareNotes)
       $('#origin').html(origin.formatted_address)
@@ -859,17 +900,31 @@
       $('#current-fare')
         .text(formatFareRange(fareRange))
         .toggleClass('fare-range', fareRange.min !== fareRange.max)
-        .append(currentFareNotesAsterisks.map(asterisk => $('<sup>').text(asterisk))) 
-
-      const zoneFare = getZoneFare(drivingDirections.routes[0])
+        .append(currentFareNotesAsterisks.map(asterisk => $('<sup>').text(asterisk)))
 
       const fare = applyFareClassDiscountsFuture(zoneFare.fare)
       $('#zone-fare').text(currencyFormatter.format(fare))
-      $('#zone-fare-details').text(pluralize('zone', zoneFare.zoneCount, true))
+      $('#zone-fare-notes').html(zoneFareNotes)
+
+      $('#overall-notes').html(overallNotes)
 
       $('#agencies').text(arrayToSentence(agencyList))
       $('#distance').text(Math.round(metersToMiles(totalDistance) * 10) / 10)
       $('#rider-info').text($('#rider-class option:selected').text())
+
+      if (timeframe === 'single') {
+        $('#single-fare-table')
+          .show()
+          .siblings().hide();
+      } else if (timeframe === 'daily') {
+        $('#daily-cap-table')
+          .show()
+          .siblings().hide();
+      } else if (timeframe === 'monthly') {
+        $('#monthly-cap-table')
+          .show()
+          .siblings().hide();
+      }
 
       $('#zone-form').slideUp('fast')
       $('#results').slideDown('fast')
