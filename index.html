@@ -331,8 +331,8 @@
       currency: 'USD',
     })
 
-    function arrayToSentence(a, b=a.pop()) {
-      return a[0]?a.join(', ')+(a[1]?',':'')+' and '+b:b;
+    function arrayToSentence(arr) {
+      return arr.join(', ').replace(/,\s([^,]+)$/, ' and $1')
     }
 
     function initializeMapServices() {
