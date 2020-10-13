@@ -246,13 +246,14 @@
             </div>
 
             <div class="row">
-              <div class="col-md-6 offset-md-6" id="single-fare-table">
+              <div class="col-md-6" id="agency-fare-urls"></div>
+              <div class="col-md-6 fare-table-image" data-type="single-fare-table">
                 <img src="/images/single-fare-table.png" class="w-100" />
               </div>
-              <div class="col-md-6 offset-md-6" id="daily-cap-table">
+              <div class="col-md-6 fare-table-image" data-type="daily-cap-table">
                 <img src="/images/daily-cap-table.png" class="w-100" />
               </div>
-              <div class="col-md-6 offset-md-6" id="monthly-cap-table">
+              <div class="col-md-6 fare-table-image" data-type="monthly-cap-table">
                 <img src="/images/monthly-cap-table.png" class="w-100" />
               </div>
             </div>
@@ -315,6 +316,147 @@
     let origin
     let destination
     let editedFare
+
+    const agencies = {
+      'AC Transit': {
+        single: 1,
+        daily: 2.2,
+        monthly: 36,
+        faresUrl: 'http://www.actransit.org/actrealtime/fares-tickets-passes/'
+      },
+      'Bay Area Rapid Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 36,
+        faresUrl: 'https://www.bart.gov/tickets/calculator'
+      },
+      'Caltrain': {
+        single: 1,
+        daily: 2,
+        monthly: 27,
+        faresUrl: 'https://www.caltrain.com/Fares/farechart.html'
+      },
+      'County Connection': {
+        single: 1,
+        daily: 1.9,
+        monthly: 30,
+        faresUrl: 'https://countyconnection.com/fares/fare-types-prices/'
+      },
+      'Dumbarton Express': {
+        single: 1,
+        daily: 2.2,
+        monthly: 36,
+        faresUrl: 'https://dumbartonexpress.com/db_fares/'
+      },
+      'Fairfield and Suisun Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 34,
+        faresUrl: 'https://fasttransit.org/fares-passes/'
+      },
+      'Golden Gate Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 36,
+        faresUrl: 'https://www.goldengate.org/bus/bus-fares-payment/fare-tables/'
+      },
+      'Marin Transit': {
+        single: 1,
+        daily: 2.8,
+        monthly: 22,
+        faresUrl: 'https://marintransit.org/fares'
+      },
+      'San Francisco Municipal Transportation Agency': {
+        single: 1,
+        daily: 7.6,
+        monthly: 27,
+        faresUrl: 'https://www.sfmta.com/getting-around/muni/fares'
+      },
+      'Petaluma Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 20,
+        faresUrl: 'https://transit.cityofpetaluma.net/fares/'
+      },
+      'SamTrans': {
+        single: 1,
+        daily: 3,
+        monthly: 29,
+        faresUrl: 'https://www.samtrans.com/fares/farechart.html'
+      },
+      'Santa Rosa CityBus': {
+        single: 1,
+        daily: 2.7,
+        monthly: 33,
+        faresUrl: 'https://srcity.org/1658/Fares'
+        },
+      'San Francisco Bay Ferry': {
+        single: 1,
+        daily: 3,
+        monthly: 36,
+        faresUrl: 'https://sanfranciscobayferry.com/fares-and-tickets'
+      },
+      'Sonoma Marin Area Rail Transit': {
+        single: 1,
+        daily: 3.1,
+        monthly: 27,
+        faresUrl: 'https://www.sonomamarintrain.org/fares'
+      },
+      'SolTrans': {
+        single: 1,
+        daily: 2.3,
+        monthly: 32,
+        faresUrl: 'https://soltrans.org/fares/fare-table/'
+      },
+      'Sonoma County Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 28,
+        faresUrl: 'https://sctransit.com/fares/'
+      },
+      'Tri Delta Transit': {
+        single: 1,
+        daily: 1.9,
+        monthly: 29,
+        faresUrl: 'http://trideltatransit.com/fares.aspx'
+      },
+      'Union City Transit': {
+        single: 1,
+        daily: 3,
+        monthly: 28,
+        faresUrl: 'https://www.unioncity.org/170/Union-City-Transit'
+      },
+      'Vacaville City Coach': {
+        single: 1,
+        daily: 3,
+        monthly: 24,
+        faresUrl: 'http://www.citycoach.com/fares/'
+      },
+      'Napa': {
+        single: 1,
+        daily: 3,
+        monthly: 40,
+        faresUrl: 'https://vinetransit.com/fares/'
+      },
+      'VTA': {
+        single: 1,
+        daily: 3,
+        monthly: 35,
+        faresUrl: 'https://www.vta.org/go/fares'
+      },
+      'WestCat (Western Contra Costa)': {
+        single: 1,
+        daily: 2.1,
+        monthly: 23,
+        faresUrl: 'https://www.westcat.org/home/FaresAll'
+      },
+      'Livermore Amador Valley Transit Authority': {
+        single: 1,
+        daily: 1.9,
+        monthly: 30,
+        faresUrl: 'https://www.wheelsbus.com/fares/'
+      }
+    }
 
     fetch('/data/farezones.json')
       .then(result => result.json())
@@ -601,124 +743,6 @@
     function applyTimeframeCurrent(transitLegs) {
       const timeframe = $('#timeframe a.active').data('type');
 
-      const agencies = {
-        'AC Transit': {
-          single: 1,
-          daily: 2.2,
-          monthly: 36,
-        },
-        'Bay Area Rapid Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 36
-        },
-        'Caltrain': {
-          single: 1,
-          daily: 2,
-          monthly: 27
-        },
-        'County Connection': {
-          single: 1,
-          daily: 1.9,
-          monthly: 30
-        },
-        'Dumbarton Express': {
-          single: 1,
-          daily: 2.2,
-          monthly: 36
-        },
-        'Fairfield and Suisun Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 34
-        },
-        'Golden Gate Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 36
-        },
-        'Marin Transit': {
-          single: 1,
-          daily: 2.8,
-          monthly: 22
-        },
-        'San Francisco Municipal Transportation Agency': {
-          single: 1,
-          daily: 7.6,
-          monthly: 27
-        },
-        'Petaluma Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 20
-        },
-        'SamTrans': {
-          single: 1,
-          daily: 3,
-          monthly: 29
-        },
-        'Santa Rosa CityBus': {
-          single: 1,
-          daily: 2.7,
-          monthly: 33
-          },
-        'San Francisco Bay Ferry': {
-          single: 1,
-          daily: 3,
-          monthly: 36
-        },
-        'Sonoma Marin Area Rail Transit': {
-          single: 1,
-          daily: 3.1,
-          monthly: 27
-        },
-        'SolTrans': {
-          single: 1,
-          daily: 2.3,
-          monthly: 32
-        },
-        'Sonoma County Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 28
-        },
-        'Tri Delta Transit': {
-          single: 1,
-          daily: 1.9,
-          monthly: 29
-        },
-        'Union City Transit': {
-          single: 1,
-          daily: 3,
-          monthly: 28
-        },
-        'Vacaville City Coach': {
-          single: 1,
-          daily: 3,
-          monthly: 24
-        },
-        'Napa': {
-          single: 1,
-          daily: 3,
-          monthly: 40
-        },
-        'VTA': {
-          single: 1,
-          daily: 3,
-          monthly: 35
-        },
-        'WestCat (Western Contra Costa)': {
-          single: 1,
-          daily: 2.1,
-          monthly: 23
-        },
-        'Livermore Amador Valley Transit Authority': {
-          single: 1,
-          daily: 1.9,
-          monthly: 30
-        }
-      }
-
       const defaultAgency =  {
         single: 1,
         daily: 3,
@@ -927,19 +951,17 @@
       $('#distance').text(Math.round(metersToMiles(totalDistance) * 10) / 10)
       $('#rider-info').text($('#rider-class option:selected').text())
 
-      if (timeframe === 'single') {
-        $('#single-fare-table')
-          .show()
-          .siblings().hide();
-      } else if (timeframe === 'daily') {
-        $('#daily-cap-table')
-          .show()
-          .siblings().hide();
-      } else if (timeframe === 'monthly') {
-        $('#monthly-cap-table')
-          .show()
-          .siblings().hide();
-      }
+      $('#agency-fare-urls').html(
+        _.compact(agencyList.map(agencyName => {
+          if (agencies[agencyName]) {
+            return $('<a>').attr('href', agencies[agencyName].faresUrl).attr('target', '_blank').text(`${agencyName} Fares`).addClass('d-block mb-1')
+          }
+        }))
+      )
+
+      $('.fare-table-image[data-type="single-fare-table"]').toggle(timeframe === 'single')
+      $('.fare-table-image[data-type="daily-cap-table"]').toggle(timeframe === 'daily')
+      $('.fare-table-image[data-type="monthly-cap-table"]').toggle(timeframe === 'monthly')
 
       $('#zone-form').slideUp('fast')
       $('#results').slideDown('fast')
