@@ -845,11 +845,12 @@
       const overallNotes = []
 
       if (editedFare) {
-        transitLegs = [
-          {
-            fare: editedFare
+        transitLegs = transitLegs.map(leg => {
+          return {
+            ...leg,
+            fare: editedFare / transitLegs.length
           }
-        ]
+        })
 
         currentFareNotes.push(
           $('<div>').addClass('note').text('Fare manually edited.')
