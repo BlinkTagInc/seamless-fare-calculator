@@ -517,13 +517,15 @@
 
       const timeFrameMultipliers = {
         'single': 1,
-        'daily': 3,
+        'daily': 2.5,
         'monthly': 36
       }
 
+      const minimumFare = 2.2
+
       return {
         zoneCount,
-        fare: Math.max(2, zoneCount) * timeFrameMultipliers[timeframe]
+        fare: Math.max(minimumFare, (zoneCount - 2) + minimumFare) * timeFrameMultipliers[timeframe]
       }
     }
 
