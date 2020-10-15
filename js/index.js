@@ -7,7 +7,6 @@ let farezones
 let farezoneMatrix
 let transitDirections
 let transitLegs
-let drivingDirections
 let renderMap = true
 let origin
 let destination
@@ -413,41 +412,27 @@ function fetchTransitStepDirections(startLocation, endLocation, time, resolve, r
   )
 }
 
-function fetchTransitDirections(resolve, reject) {
-  const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
-    .toDate()
-  directionsService.route({
-      origin: origin.geometry.location,
-      destination: destination.geometry.location,
-      travelMode: 'TRANSIT',
-      transitOptions: {
-        departureTime: nextMondayMorning
-      }
-    },
-    (response, status) => {
-      if (status !== 'OK') {
-        return reject(new Error(status));
-      }
+function fetchTransitDirections() {
+  return new Promise((resolve, reject) => {
+    const nextMondayMorning = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(8).minute(0).second(0)
+      .toDate()
+    directionsService.route({
+        origin: origin.geometry.location,
+        destination: destination.geometry.location,
+        travelMode: 'TRANSIT',
+        transitOptions: {
+          departureTime: nextMondayMorning
+        }
+      },
+      (response, status) => {
+        if (status !== 'OK') {
+          return reject(new Error(status));
+        }
 
-      resolve(response);
-    }
-  )
-}
-
-function fetchDrivingDirections(resolve, reject) {
-  directionsService.route({
-      origin: origin.geometry.location,
-      destination: destination.geometry.location,
-      travelMode: 'DRIVING',
-    },
-    (response, status) => {
-      if (status !== 'OK') {
-        return reject(new Error(status));
+        resolve(response);
       }
-
-      resolve(response);
-    }
-  )
+    )
+  })
 }
 
 function applyTimeframeCurrent(transitLegs) {
@@ -566,7 +551,7 @@ function sumFares(faresForTimeRange) {
 }
 
 async function renderResults() {
-  if (!transitDirections || !drivingDirections) {
+  if (!transitDirections) {
     return  alert('No directions found.')
   }
 
@@ -596,7 +581,7 @@ async function renderResults() {
   const totalDistance = _.sumBy(faresForTimeRange, 'distance')
   const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
   const fareRange = applyFareClassDiscountsCurrent(totalFare)
-  const zoneFare = getZoneFare(drivingDirections.routes[0])
+  const zoneFare = getZoneFare(transitDirections.routes[0])
 
   if (zoneFare === null) {
     return
@@ -688,7 +673,7 @@ async function renderResults() {
   }
 }
 
-$('#zone-form').submit(event => {
+$('#zone-form').submit(async event => {
   event.preventDefault()
 
   origin = autocomplete_origin.getPlace()
@@ -701,135 +686,126 @@ $('#zone-form').submit(event => {
     return alert('Please enter an end location, like "San Francisco" or "123 Walnut Street, Walnut Creek"')
   }
 
-  Promise.all([
-      new Promise((resolve, reject) => {
-        fetchTransitDirections(resolve, reject)
-      }),
-      new Promise((resolve, reject) => {
-        fetchDrivingDirections(resolve, reject)
-      }),
-    ])
-    .then(async ([result1, result2]) => {
-      transitDirections = result1
-      drivingDirections = result2
-      renderMap = true
-      transitLegs = []
+  try {
+    transitDirections = await fetchTransitDirections()
+    renderMap = true
+    transitLegs = []
 
-      const agencyFareInfo = {
-        'AC Transit': {
-          value: 2.5
-        },
-        'Dumbarton Express Consortium': {
-          value: 6
+    const agencyFareInfo = {
+      'AC Transit': {
+        value: 2.5
+      },
+      'Dumbarton Express Consortium': {
+        value: 6
+      }
+    }
+
+    await Promise.all(transitDirections.routes[0].legs.map(async leg => {
+      return Promise.all(leg.steps.map(async step => {
+        if (step.travel_mode !== 'TRANSIT') {
+          return;
         }
-      }
 
-      await Promise.all(transitDirections.routes[0].legs.map(async leg => {
-        return Promise.all(leg.steps.map(async step => {
-          if (step.travel_mode !== 'TRANSIT') {
-            return;
+        const stepDirections = await new Promise((resolve, reject) => {
+          fetchTransitStepDirections(step.start_location, step.end_location, step.transit
+            .departure_time.value, resolve, reject);
+        });
+
+        if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
+          const leg = {
+            distance: step.distance.value
           }
 
-          const stepDirections = await new Promise((resolve, reject) => {
-            fetchTransitStepDirections(step.start_location, step.end_location, step.transit
-              .departure_time.value, resolve, reject);
-          });
-
-          if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
-            const leg = {
-              distance: step.distance.value
+          stepDirections.routes[0].legs.forEach(routeLeg => routeLeg.steps.forEach(step => {
+            if (step.transit) {
+              step.transit.line.agencies.forEach(agency => {
+                leg.agency = agency.name;
+              });
             }
+          }));
 
-            stepDirections.routes[0].legs.forEach(routeLeg => routeLeg.steps.forEach(step => {
-              if (step.transit) {
-                step.transit.line.agencies.forEach(agency => {
-                  leg.agency = agency.name;
-                });
-              }
-            }));
-
-            if (agencyFareInfo[leg.agency]) {
-              leg.fare = agencyFareInfo[leg.agency].value;
-              leg.noFareAgency = true
-            } else if (stepDirections.routes[0].fare) {
-              leg.fare = stepDirections.routes[0].fare.value;
-            } else {
-              leg.fare = 0;
-            }
-
-            transitLegs.push(leg);
+          if (agencyFareInfo[leg.agency]) {
+            leg.fare = agencyFareInfo[leg.agency].value;
+            leg.noFareAgency = true
+          } else if (stepDirections.routes[0].fare) {
+            leg.fare = stepDirections.routes[0].fare.value;
+          } else {
+            leg.fare = 0;
           }
-        }));
+
+          transitLegs.push(leg);
+        }
       }));
-
-      renderResults();
-    })
-    .catch(error => {
-      console.error(error)
-      $('#results').hide()
-      return alert('Unable to compare trip')
-    })
-
-  $('#reset-button').click(event => {
-    event.preventDefault()
-
-    $('#zone-form').slideDown('fast')
-    $('#results').slideUp('fast')
-    $('#reset-button').fadeOut('fast')
-
-    autocomplete_origin.set('place', null);
-    autocomplete_destination.set('place', null)
-
-    directionsRenderer.setMap(null)
-
-    $('#start-address').val('')
-    $('#end-address').val('')
-    $('#rider-class').val('adult')
-    $('#timeframe a').each((index, el) => {
-      if ($(el).data('type') === 'single') {
-        $(el).addClass('active')
-      } else {
-        $(el).removeClass('active')
-      }
-    })
-
-    map.panTo({
-      lat: 37.7,
-      lng: -122.3
-    })
-
-    map.setZoom(10)
-
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-
-    editedFare = null
-  })
-
-  $('#timeframe a').on('click', event => {
-    event.preventDefault()
-    $(event.target).tab('show')
+    }));
 
     renderResults()
+  } catch (error) {
+    console.error(error)
+    $('#results').hide()
+    return alert('Unable to compare trip')
+  }
+})
+
+
+$('#reset-button').click(event => {
+  event.preventDefault()
+
+  $('#zone-form').slideDown('fast')
+  $('#results').slideUp('fast')
+  $('#reset-button').fadeOut('fast')
+
+  autocomplete_origin.set('place', null);
+  autocomplete_destination.set('place', null)
+
+  directionsRenderer.setMap(null)
+
+  $('#start-address').val('')
+  $('#end-address').val('')
+  $('#rider-class').val('adult')
+  $('#timeframe a').each((index, el) => {
+    if ($(el).data('type') === 'single') {
+      $(el).addClass('active')
+    } else {
+      $(el).removeClass('active')
+    }
   })
 
-  $('#edit-fare').click(event => {
-    event.preventDefault()
-    const userInput = prompt('Enter correct one-way single fare', '2.00')
-
-    if (userInput === undefined) {
-      return
-    }
-
-    const processedUserInput = parseFloat(userInput.replace(/\$/g, ''))
-
-    if (isNaN(processedUserInput)) {
-      return alert('Fare submitted is not a valid number.')
-    } else if (processedUserInput <= 0) {
-      return alert('Fare submitted is not a positive number.')
-    }
-
-    editedFare = processedUserInput
-
-    renderResults()
+  map.panTo({
+    lat: 37.7,
+    lng: -122.3
   })
+
+  map.setZoom(10)
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  editedFare = null
+})
+
+$('#timeframe a').on('click', event => {
+  event.preventDefault()
+  $(event.target).tab('show')
+
+  renderResults()
+})
+
+$('#edit-fare').click(event => {
+  event.preventDefault()
+  const userInput = prompt('Enter correct one-way single fare', '2.00')
+
+  if (userInput === undefined) {
+    return
+  }
+
+  const processedUserInput = parseFloat(userInput.replace(/\$/g, ''))
+
+  if (isNaN(processedUserInput)) {
+    return alert('Fare submitted is not a valid number.')
+  } else if (processedUserInput <= 0) {
+    return alert('Fare submitted is not a positive number.')
+  }
+
+  editedFare = processedUserInput
+
+  renderResults()
 })
