@@ -4,6 +4,7 @@ let autocomplete_destination
 let directionsService
 let directionsRenderer
 let farezones
+let farezoneMatrix
 let transitDirections
 let transitLegs
 let drivingDirections
@@ -156,10 +157,14 @@ const agencies = {
 fetch('/data/farezones.json')
   .then(result => result.json())
   .then(result => {
-    result.features.forEach((feature, index) => {
-      feature.properties.Name = `Zone ${index}`;
-    })
     farezones = L.geoJson(result)
+  })
+
+
+fetch('/data/farezones_matrix.json')
+  .then(result => result.json())
+  .then(result => {
+    farezoneMatrix = result
   })
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -316,7 +321,12 @@ function initializeMapServices() {
 
   directionsRenderer = new google.maps.DirectionsRenderer({
     draggable: true,
-    map
+    map,
+    polylineOptions: {
+      strokeOpacity: 1,
+      strokeWeight: 10,
+      strokeColor: '#264586'
+    }
   })
 
   const transitLayer = new google.maps.TransitLayer()
@@ -330,40 +340,45 @@ function initializeMapServices() {
   })
 
   kmlLayer.setMap(map)
-
-  // map.data.loadGeoJson('/data/farezones.json')
-
-  // map.data.setStyle({
-  //   fillColor: '#cccccc',
-  //   fillOpacity: 0.2,
-  //   strokeWeight: 3,
-  //   strokeColor: '#333333'
-  // })
 }
 
 function metersToMiles(meters) {
   return meters / 1609.34
 }
 
+function getZoneByPoint(location) {
+  var matchedZones = leafletPip.pointInLayer([location.lng(), location.lat()], farezones, true)
+
+  if (matchedZones && matchedZones.length && matchedZones[0].feature) {
+    var zoneId = matchedZones[0].feature.properties.name
+
+    if (zoneId) {
+      return zoneId
+    }
+  }
+}
+
+function getZoneCount(startZone, endZone) {
+  if (!startZone) {
+    return alert('Invalid start zone.')
+  }
+  if (!endZone) {
+    return alert('Invalid end zone.')
+  }
+
+  return farezoneMatrix[startZone][endZone]
+}
+
 function getZoneFare(route) {
   const timeframe = $('#timeframe a.active').data('type');
-  const decodedPath = polyline.decode(route.overview_polyline)
-  const zones = {}
+  const startZone = getZoneByPoint(route.legs[0].start_location)
+  const endZone = getZoneByPoint(route.legs[0].end_location)
 
-  decodedPath.forEach(function (point, idx) {
-    // use first, last and every 4th point
-    if (idx === 1 || idx % 4 === 0 || idx === (decodedPath.length - 1)) {
-      var matchedZones = leafletPip.pointInLayer([point[1], point[0]], farezones, true)
+  const zoneCount = getZoneCount(startZone, endZone)
 
-      if (matchedZones && matchedZones.length && matchedZones[0].feature && matchedZones[0].feature
-        .properties) {
-        var zone = matchedZones[0].feature.properties
-        zones[zone.Name] = true
-      }
-    }
-  })
-
-  const zoneCount = _.size(zones)
+  if (zoneCount === undefined) {
+    return null
+  }
 
   const timeFrameMultipliers = {
     'single': 1,
@@ -582,6 +597,10 @@ async function renderResults() {
   const noFareAgencies = _.uniq(_.map(_.filter(faresForTimeRange, leg => leg.noFareAgency), 'agency'))
   const fareRange = applyFareClassDiscountsCurrent(totalFare)
   const zoneFare = getZoneFare(drivingDirections.routes[0])
+
+  if (zoneFare === null) {
+    return
+  }
 
   currentFareNotes.push($('<div>').text(pluralize('agency', agencyList.length, true)))
 
