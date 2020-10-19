@@ -304,6 +304,17 @@ function initializeMapServices() {
   autocomplete_origin = new google.maps.places.Autocomplete(document.getElementById('start-address'), options)
   autocomplete_destination = new google.maps.places.Autocomplete(document.getElementById('end-address'), options)
 
+  google.maps.event.addDomListener(document.getElementById('start-address'), 'keydown', (event) => { 
+    if (event.keyCode === 13) { 
+       event.preventDefault()
+    }
+  })
+  google.maps.event.addDomListener(document.getElementById('end-address'), 'keydown', (event) => { 
+    if (event.keyCode === 13) { 
+       event.preventDefault()
+    }
+  })
+
   autocomplete_origin.setFields(['formatted_address', 'geometry'])
   autocomplete_destination.setFields(['formatted_address', 'geometry'])
 
