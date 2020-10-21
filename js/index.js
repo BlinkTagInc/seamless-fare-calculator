@@ -717,15 +717,8 @@ $('#zone-form').submit(async event => {
           return;
         }
 
-        let departureTime = step.transit.departure_time.value
-
-        // If caltrain, change departure time to 10:45 AM to avoid limited trains with no fare information
-        if (step.transit && step.transit.line && step.transit.line.agencies[0].name === 'Caltrain') {
-          departureTime = moment().startOf('isoWeek').add(1, 'week').day('monday').hour(10).minute(45).second(0).toDate()
-        }
-
         const stepDirections = await new Promise((resolve, reject) => {
-          fetchTransitStepDirections(step.start_location, step.end_location, departureTime, resolve, reject);
+          fetchTransitStepDirections(step.start_location, step.end_location, step.transit.departure_time.value, resolve, reject);
         });
 
         if (stepDirections && stepDirections.routes && stepDirections.routes.length > 0) {
