@@ -119,6 +119,10 @@ h4 {
   text-align: left;
 }
 
+.note.no-highlight {
+  background-color: transparent;
+}
+
 .notes {
   font-size: 12px;
 }

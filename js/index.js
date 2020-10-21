@@ -621,8 +621,8 @@ async function renderResults() {
   }
 
   currentFareNotes.push(
-    $('<div>').addClass('note').html(
-      '“Current fare“ is the cash fare retrieved from Google Transit Directions. <a href="https://www.seamlessbayarea.org/integrated-fare-vision">Read more »</a>.'
+    $('<div>').addClass('note no-highlight').html(
+      '“Current fare“ is the cash fare retrieved from Google Transit Directions. <a href="https://www.seamlessbayarea.org/faq-fare-calculator">Read more »</a>.'
     )
   ) 
 
