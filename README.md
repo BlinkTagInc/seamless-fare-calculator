@@ -20,4 +20,4 @@ togeojson farezones.kml > farezones.json
 
 Review `data/farezone_calcs/farezones_matrix.json` to ensure it looks ok, then copy it to `/data`  directory
 
-    cp data/farezone_calcs/farezones_matrix.json data/farezones_matrix.json
+    cp farezones_matrix.json ../farezones_matrix.json
