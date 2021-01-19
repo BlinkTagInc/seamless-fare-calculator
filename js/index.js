@@ -343,7 +343,7 @@ function initializeMapServices() {
   transitLayer.setMap(map)
 
   const kmlLayer = new google.maps.KmlLayer({
-    url: `https://${location.host}/data/farezones.kml?cache=2020-08-17`,
+    url: `https://${location.host}/data/farezones.kml?cache=2021-01-19`,
     preserveViewport: true,
     suppressInfoWindows: true,
     map: map
