@@ -63,7 +63,7 @@ const agencies = {
   },
   'San Francisco Municipal Transportation Agency': {
     single: 1,
-    daily: 7.6,
+    daily: 1.6666,
     monthly: 27,
     faresUrl: 'https://www.sfmta.com/getting-around/muni/fares'
   },
